@@ -37,7 +37,7 @@ class AleInterface(object):
             sys.exit(-1)
         self.ale.loadROM(rom_file)
 
-        self.actions  = self.ale.getMinimalActionSet()
+        self.actions = self.ale.getMinimalActionSet()
         self.actionsB = self.ale.getMinimalActionSetB()
 
     def get_actions_num(self):
@@ -48,6 +48,10 @@ class AleInterface(object):
 
     def act(self, action):
         reward = self.ale.act(self.actions[action])
+        return reward
+
+    def actAB(self, actionA, actionB):
+        reward = self.ale.actAB(self.actions[actionA],self.actionsB[actionB])
         return reward
 
     def get_screen_gray(self):
