@@ -11,10 +11,12 @@ import numpy as np
 import cv2
 from collections import deque
 import pygame
+import q_network
 
 from ale_util import logger
 from ale_net import DLNetwork
 from ale_interface import AleInterface
+from sarsa_agent import SARSALambdaAgent
 
 pygame.init()
 
@@ -48,7 +50,13 @@ class DQNLearning(object):
         else:
             self.param_file = "%s/%s.json" % (args.saved_model_dir, game_name)
 
+        # Player A
+        # DQN network
         self.net = DLNetwork(game_name, self.actions, args)
+
+        # Player B
+        # SARSA 
+        self.sarsa_agent = self.sarsa_init(args)
 
         # screen parameters
         # self.screen = (args.screen_width, args.screen_height)
@@ -56,6 +64,47 @@ class DQNLearning(object):
         # self.display = pygame.display.set_mode(self.screen)
 
         self.deque = deque()
+
+    #SARSA agent init 
+    def sarsa_init(self, args):
+        
+        rng = 1 #TODO add a random number generator
+
+        if args.nn_file is None:
+            #New network creation
+            self.logger.info("Creating network for SARSA")
+            #TODO a lot of missing arguments where found, now i have serious doubts about this code working
+            sarsa_network = q_network.DeepQLearner(args.screen_width,
+                                                   args.screen_height,
+                                                   self.actionsB,
+                                                   args.phi_length, #num_frames
+                                                   args.discount,
+                                                   args.learning_rate,
+                                                   args.rms_decay, #rho
+                                                   args.rms_epsilon,
+                                                   args.momentum_sarsa,
+                                                   1,#clip_delta
+                                                   10000,#freeze_interval
+                                                   32,#batch_size
+                                                   args.network_type,
+                                                   args.update_rule,
+                                                   # args.lambda_decay, #batch_accumulator
+                                                   'sum',
+                                                   rng)
+        else:
+            #Pretrained network loading
+            network_file_handle = open(args.nn_file, 'r')
+            sarsa_network = cPickle.load(network_file_handle)
+
+        self.logger.info("Creating SARSA agent")
+        sarsa_agent_inst = SARSALambdaAgent( sarsa_network,
+                                             args.epsilon_start,
+                                             args.epsilon_min,
+                                             args.epsilon_decay,
+                                             args.experiment_prefix,
+                                             rng)
+
+        return sarsa_agent_inst
 
     def param_serierlize(self, epsilon, step):
         json.dump({"epsilon": epsilon, "step": step}, open(self.param_file, "w"))
@@ -184,6 +233,7 @@ class DQNLearning(object):
                 (epoch, state_desc, step, global_step, max_reward, epsilon, stage_reward, np.max(best_act)))
 
     def play_game(self, epsilon):
+
         # play games
         max_reward = 0
         epoch = 0
@@ -204,7 +254,9 @@ class DQNLearning(object):
                 state_seq[:, :, i] = state
             stage_step = 0
             stage_reward = 0
+
             while True:
+
                 # select action
                 best_act = self.net.predict([state_seq])[0]
                 if random.random() < epsilon or len(np.unique(best_act)) == 1:
@@ -234,9 +286,11 @@ class DQNLearning(object):
                     stage_reward = reward_n
                     print "game running, step=%d, action=%d, reward=%d" % \
                           (stage_step, action, reward_n)
+
             # record reward
             if stage_reward > max_reward:
                 max_reward = stage_reward
+
             self.logger.info("game over, epoch=%d, step=%d, reward=%d, max_reward=%d" %
                              (epoch, stage_step, stage_reward, max_reward))
 

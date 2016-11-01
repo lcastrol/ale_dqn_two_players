@@ -2,6 +2,8 @@
 #  -*- coding: utf-8 -*-
 # author:  <yao62995@gmail.com> 
 
+from defaults import defaults
+
 import argparse
 from ale_learning import DQNLearning
 
@@ -45,18 +47,50 @@ def parser_argument():
     parse.add_argument("--model_file", type=str, default="", help="")
     parse.add_argument("--save_model_freq", type=int, default=100000, help="")
 
-    # parse.add_argument("--screen_width", type=int, default=80, help="resize screen width")
-    # parse.add_argument("--screen_height", type=int, default=80, help="resize screen height")
+    ## sarsa arguments
+    parse.add_argument('--nn-file', dest="nn_file", type=str, default=None, help='Pickle file containing trained net.')
+
+    parse.add_argument("--screen_width", type=int, default=84, help="resize screen width")
+    parse.add_argument("--screen_height", type=int, default=84, help="resize screen height")
+
+    parse.add_argument('--phi-length', dest="phi_length", type=int, default=4, help=('Number of recent frames used to represent ' + 'state. (default: 4)'))
+    parse.add_argument('--discount', type=float, default=.99, help='Discount rate (default: .99)')
+    parse.add_argument('--learning-rate', dest="learning_rate", type=float, default=.00025, help='Learning rate (default: .00025 )')
+    parse.add_argument('--rms-decay', dest="rms_decay", type=float, default=defaults.RMS_DECAY, help='Decay rate for rms_prop (default: %(default)s)')
+    parse.add_argument('--rms-epsilon', dest="rms_epsilon", type=float, default=defaults.RMS_EPSILON, help='Denominator epsilson for rms_prop ' + '(default: )')
+    parse.add_argument('--momentum-sarsa', dest="momentum_sarsa", type=float, default=defaults.MOMENTUM, help=('Momentum term for Nesterov momentum. '+ '(default: %(default)s)')) #TODO check the other momentum
+    parse.add_argument('--network-type', dest="network_type", type=str, default=defaults.NETWORK_TYPE, help=('nips_cuda|nips_dnn|nature_cuda|nature_dnn' + '|linear (default: %(default)s)'))
+    parse.add_argument('--update-rule', dest="update_rule", type=str, default=defaults.UPDATE_RULE, help=('deepmind_rmsprop|rmsprop|sgd ' + '(default: %(default)s)'))
+    parse.add_argument('--lambda', dest="lambda_decay", type=float, default=defaults.LAMBDA, help=('Lambda value. ' + '(default: %(default)s)'))
+
+    parse.add_argument('--epsilon-start', dest="epsilon_start", type=float, default=defaults.EPSILON_START, help=('Starting value for epsilon. ' + '(default: %(default)s)'))
+    parse.add_argument('--epsilon-min', dest="epsilon_min", type=float, default=defaults.EPSILON_MIN, help='Minimum epsilon. (default: %(default)s)')
+    parse.add_argument('--epsilon-decay', dest="epsilon_decay", type=float, default=defaults.EPSILON_DECAY, help=('Number of steps to minimum epsilon. ' + '(default: %(default)s)'))
+
+    parse.add_argument('--experiment-prefix', dest="experiment_prefix", default=None, help='Experiment name prefix ' '(default is the name of the game)')
 
     # parameter for play
     parse.add_argument("--play_epsilon", type=float, default=0.0, help="a float value in [0, 1), 0 means use global train epsilon")
 
+    #Parse the arguments 
     args = parse.parse_args()
+    #TODO this can be done with the "required" flag within the parsing of the argument
     if args.game is None or args.handle is None:
         parse.print_help()
+
+    #TODO Fix this, this should trigger a warning at least
     if args.handle != "train":  # use cpu when play games
         args.device = "cpu"
+
+    #Assign a prefix
+    #TODO add a time stamp to the prefix
+    if args.experiment_prefix is None:
+        args.experiment_prefix = args.game 
+
+    #Generate the experiment wrapper
     dqn = DQNLearning(args.game, args)
+
+    #Trigger the experiment depending on the mode play|train
     if args.handle == "train":
         dqn.train_net()
     else:
