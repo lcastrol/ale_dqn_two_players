@@ -113,8 +113,10 @@ class DQNLearning(object):
                     action = random.randint(0, self.actions - 1)
                 else:
                     action = np.argmax(best_act)
+                # get action for player B
+                actionB = 1 #TODO
                 # carry out selected action
-                reward_n = self.game.act(action)
+                reward_n = self.game.actAB(action, actionB)
                 state_n = self.game.get_screen_rgb()
                 self.show_screen(state)
                 state_n = self.process_snapshot(state_n)
@@ -192,6 +194,8 @@ class DQNLearning(object):
             self.logger.info("game start...")
             # init state
             self.game.reset_game()
+            # two players mode switch
+            self.game.set_mode(1) 
             state_seq = np.empty((80, 80, self.frame_seq_num))
             for i in range(self.frame_seq_num):
                 state = self.game.get_screen_rgb()
@@ -207,8 +211,10 @@ class DQNLearning(object):
                     action = random.randint(0, self.actions - 1)
                 else:
                     action = np.argmax(best_act)
+                # get action for player B
+                actionB = 1 #TODO
                 # carry out selected action
-                reward_n = self.game.act(action)
+                reward_n = self.game.actAB(action, actionB)
                 state_n = self.game.get_screen_rgb()
                 self.show_screen(state_n)
                 state_n = self.process_snapshot(state_n)
