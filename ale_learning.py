@@ -79,7 +79,7 @@ class DQNLearning(object):
     #SARSA agent init 
     def sarsa_init(self, args):
         
-        rng = 1 #TODO add a random number generator
+        rng = np.random.RandomState(123456) #TODO add a random number generator
 
         if args.nn_file is None:
             #New network creation
@@ -123,11 +123,11 @@ class DQNLearning(object):
         index = self.buffer_count % self.buffer_length - 1
         max_image = np.maximum(self.screen_buffer[index, ...],
                                self.screen_buffer[index - 1, ...])
-        return self.sarsa_resize_image(max_image)
+        return self.sarsa_resize_image(max_image, args)
 
-    def sarsa_resize_image(self, image):
+    def sarsa_resize_image(self, image, args):
         """ Appropriately resize a single image """
-        if self.resize_method == 'crop':
+        if args.resize_method == 'crop':
             # resize keeping aspect ratio
             resize_height = int(round(
                 float(self.height) * self.resized_width / self.width))
@@ -142,9 +142,9 @@ class DQNLearning(object):
                               crop_y_cutoff + self.resized_height, :]
 
             return cropped
-        elif self.resize_method == 'scale':
+        elif args.resize_method == 'scale':
             return cv2.resize(image,
-                              (self.resized_width, self.resized_height),
+                              (args.screen_width, args.screen_height),
                               interpolation=cv2.INTER_LINEAR)
         else:
             raise ValueError('Unrecognized image resize method.')
@@ -209,11 +209,11 @@ class DQNLearning(object):
             legal_actionsB = self.game.ale.getLegalActionSetB()
             null_reward = self.game.actAB(0, 18)
             index = self.buffer_count % self.buffer_length
-            self.ale.getScreenGrayscale(self.screen_buffer[index, ...])
+            self.game.ale.getScreenGrayscale(self.screen_buffer[index, ...])
             self.buffer_count += 1
             null_reward = self.game.actAB(0, 18)
             index = self.buffer_count % self.buffer_length
-            self.ale.getScreenGrayscale(self.screen_buffer[index, ...])
+            self.game.ale.getScreenGrayscale(self.screen_buffer[index, ...])
             self.buffer_count += 1
 
             #B starts the episode

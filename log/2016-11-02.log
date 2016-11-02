@@ -26,3 +26,7 @@
 2016-11-02 06:37:33 [INFO] Creating network for SARSA
 2016-11-02 06:37:34 [INFO] Creating SARSA agent
 2016-11-02 06:37:34 [INFO] Training starting...
+2016-11-02 15:28:54 [WARN] Could not find old network weights
+2016-11-02 15:28:54 [INFO] Creating network for SARSA
+2016-11-02 15:28:59 [INFO] Creating SARSA agent
+2016-11-02 15:28:59 [INFO] Training starting...

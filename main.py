@@ -68,6 +68,7 @@ def parser_argument():
     parse.add_argument('--epsilon-decay', dest="epsilon_decay", type=float, default=defaults.EPSILON_DECAY, help=('Number of steps to minimum epsilon. ' + '(default: %(default)s)'))
 
     parse.add_argument('--experiment-prefix', dest="experiment_prefix", default=None, help='Experiment name prefix ' '(default is the name of the game)')
+    parse.add_argument('--resize-method', dest="resize_method", type=str, default=defaults.RESIZE_METHOD, help=('crop|scale (default: %(default)s)'))
 
     # parameter for play
     parse.add_argument("--play_epsilon", type=float, default=0.0, help="a float value in [0, 1), 0 means use global train epsilon")

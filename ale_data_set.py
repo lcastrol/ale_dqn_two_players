@@ -18,7 +18,7 @@ class DataSet(object):
         self.rewards = np.zeros(self.max_steps, dtype=floatX)
        
     def add_sample(self, img, action, reward):
-        self.imgs[self.top] = img
+        self.imgs[self.top] = img #TODO NEXT BUG NOT INITIALIZED
         self.actions[self.top] = action
         self.rewards[self.top] = reward
 
