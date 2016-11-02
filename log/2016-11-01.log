@@ -28,3 +28,11 @@
 2016-11-01 14:09:27 [INFO] game start...
 2016-11-01 14:10:28 [WARN] Could not find old network weights
 2016-11-01 14:11:52 [INFO] epoch=1, state=observe, step=1786(0), max_reward=1, epsilon=1.00000, reward=1, max_Q=0.020797
+2016-11-01 23:00:50 [WARN] Could not find old network weights
+2016-11-01 23:00:50 [INFO] Creating network for SARSA
+2016-11-01 23:00:51 [INFO] Creating SARSA agent
+2016-11-01 23:00:51 [INFO] game start...
+2016-11-01 23:00:56 [WARN] Could not find old network weights
+2016-11-01 23:00:56 [INFO] Creating network for SARSA
+2016-11-01 23:00:57 [INFO] Creating SARSA agent
+2016-11-01 23:00:57 [INFO] game start...

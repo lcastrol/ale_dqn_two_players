@@ -9,9 +9,13 @@ from ale_python_interface import ALEInterface
 import pygame
 pygame.init()
 
+#lcastrol: this interface seems very stupid to me, I believe we must get rid of it
+
 class AleInterface(object):
     def __init__(self, game, args):
-        self.game = game
+
+        #self.game = game
+
         self.ale = ALEInterface()
 
         # if sys.platform == 'darwin':
@@ -20,6 +24,7 @@ class AleInterface(object):
         #     self.ale.setBool('sound', True)
         # self.ale.setBool('display_screen', True)
         #
+
         self.ale.setBool('display_screen', args.display_screen)
 
         self.ale.setInt('frame_skip', args.frame_skip)

@@ -92,7 +92,7 @@ def parser_argument():
 
     #Trigger the experiment depending on the mode play|train
     if args.handle == "train":
-        dqn.train_net()
+        dqn.train_net(args)
     else:
         dqn.play_game(args.play_epsilon)
 

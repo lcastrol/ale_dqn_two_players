@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #  -*- coding: utf-8 -*-
-# author:  <yao62995@gmail.com> 
+# based on the code of:  <yao62995@gmail.com> 
+# modifications by: Luis Castro and Jens Rowekamp 
 
 import os
 import random
@@ -9,25 +10,29 @@ import time
 import json
 import numpy as np
 import cv2
-from collections import deque
 import pygame
 import q_network
 
+from ale_interface import AleInterface
+from collections import deque
 from ale_util import logger
 from ale_net import DLNetwork
-from ale_interface import AleInterface
 from sarsa_agent import SARSALambdaAgent
 
 pygame.init()
 
-
 class DQNLearning(object):
     def __init__(self, game_name, args):
 
+        #save game name
         self.game_name = game_name
+
+        #Initialize logger
         self.logger = logger
 
+        #initiallize ALE
         self.game = AleInterface(game_name, args)
+
         self.actions = self.game.get_actions_num()
         self.actionsB = self.game.get_actions_numB()
 
@@ -43,6 +48,13 @@ class DQNLearning(object):
 
         self.update_frequency = args.update_frequency
         self.action_repeat = args.action_repeat
+
+        # Screen buffer for player B
+        
+        self.buffer_length = 2
+        self.buffer_count = 0
+        self.screen_buffer = np.empty((self.buffer_length, args.screen_height, args.screen_width),
+                                      dtype=np.uint8)
 
         self.frame_seq_num = args.frame_seq_num
         if args.saved_model_dir == "":
@@ -106,6 +118,40 @@ class DQNLearning(object):
 
         return sarsa_agent_inst
 
+    def sarsa_get_observation(self,args):
+
+        """ Resize and merge the previous two screen images """
+        assert self.buffer_count >= 2
+        index = self.buffer_count % self.buffer_length - 1
+        max_image = np.maximum(self.screen_buffer[index, ...],
+                               self.screen_buffer[index - 1, ...])
+        return self.sarsa_resize_image(max_image)
+
+    def sarsa_resize_image(self, image):
+        """ Appropriately resize a single image """
+
+        if self.resize_method == 'crop':
+            # resize keeping aspect ratio
+            resize_height = int(round(
+                float(self.height) * self.resized_width / self.width))
+
+            resized = cv2.resize(image,
+                                 (self.resized_width, resize_height),
+                                 interpolation=cv2.INTER_LINEAR)
+
+            # Crop the part we want
+            crop_y_cutoff = resize_height - CROP_OFFSET - self.resized_height
+            cropped = resized[crop_y_cutoff:
+                              crop_y_cutoff + self.resized_height, :]
+
+            return cropped
+        elif self.resize_method == 'scale':
+            return cv2.resize(image,
+                              (self.resized_width, self.resized_height),
+                              interpolation=cv2.INTER_LINEAR)
+        else:
+            raise ValueError('Unrecognized image resize method.')
+
     def param_serierlize(self, epsilon, step):
         json.dump({"epsilon": epsilon, "step": step}, open(self.param_file, "w"))
 
@@ -132,12 +178,17 @@ class DQNLearning(object):
         # self.display.blit(surface, rect)
         # pygame.display.update()
 
-    def train_net(self):
+    def train_net(self, args):
+
+        self.logger.info("Training starting...")
+
         # training
         max_reward = 0
         epsilon, global_step = self.param_unserierlize()
         step = 0
         epoch = 0
+
+
         while True:  # loop epochs
 
             epoch += 1
@@ -155,32 +206,59 @@ class DQNLearning(object):
                 state = self.process_snapshot(state)
                 state_seq[:, :, i] = state
             stage_reward = 0
+
+            #TODO find a better way to do this
+            #Initiallize B screen buffer
+            legal_actionsB = self.game.ale.getLegalActionSetB()
+            print legal_actionsB[0]
+            #TODO fix a bug in actAB
+            null_reward = self.game.actAB(0, 18)
+            null_reward = self.game.actAB(0, 18)
+
+
+            #B starts the episode
+            actionB = self.sarsa_agent.start_episode(self.sarsa_get_observation(args))
+            
             while True:  # loop game frames
-                # select action
+
+                # select action player A
                 best_act = self.net.predict([state_seq])[0]
                 if random.random() <= epsilon or len(np.unique(best_act)) == 1:  # random select
-                    action = random.randint(0, self.actions - 1)
+                    actionA = random.randint(0, self.actions - 1)
                 else:
-                    action = np.argmax(best_act)
-                # get action for player B
-                actionB = 1 #TODO
+                    actionA = np.argmax(best_act)
+
+                # select action action for player B
+                actionB = self.sarsa_agent.step(stage_reward, self.sarsa_get_observation(args))
+
                 # carry out selected action
-                reward_n = self.game.actAB(action, actionB)
+                reward_n = self.game.actAB(actionA, actionB)
+
+                # get observation for player A
                 state_n = self.game.get_screen_rgb()
                 self.show_screen(state)
                 state_n = self.process_snapshot(state_n)
                 state_n = np.reshape(state_n, (80, 80, 1))
                 state_seq_n = np.append(state_n, state_seq[:, :, : (self.frame_seq_num - 1)], axis=2)
+
+                # get observation for player B
+
+
+                #check game over state
                 terminal_n = self.game.game_over()
+                #TODO add frame limit
+
                 # scale down epsilon
                 if step > self.observe and epsilon > self.final_epsilon:
                     epsilon -= (self.init_epsilon - self.final_epsilon) / self.explore
+
                 # store experience
                 act_onehot = np.zeros(self.actions)
-                act_onehot[action] = 1
+                act_onehot[actionA] = 1
                 self.deque.append((state_seq, act_onehot, reward_n, state_seq_n, terminal_n))
                 if len(self.deque) > self.replay_memory:
                     self.deque.popleft()
+
                 # minibatch train
                 if step > self.observe and step % self.update_frequency == 0:
                     for _ in xrange(self.action_repeat):
@@ -201,16 +279,19 @@ class DQNLearning(object):
                             target_rewards.append(t_r)
                         # train Q network
                         self.net.fit(batch_state_seq, batch_action, target_rewards)
+
                 # update state
                 state_seq = state_seq_n
                 step += 1
                 # serierlize param
+
                 # save network model
                 if step % self.save_model_freq == 0:
                     global_step += step
                     self.param_serierlize(epsilon, global_step)
                     self.net.save_model("%s-dqn" % self.game_name, global_step=global_step)
                     self.logger.info("save network model, global_step=%d, cur_step=%d" % (global_step, step))
+
                 # state description
                 if step < self.observe:
                     state_desc = "observe"
@@ -218,11 +299,13 @@ class DQNLearning(object):
                     state_desc = "explore"
                 else:
                     state_desc = "train"
+
                 # record reward
-                print "game running, step=%d, action=%s, reward=%d, max_Q=%.6f, min_Q=%.6f" % \
-                          (step, action, reward_n, np.max(best_act), np.min(best_act))
+                print "game running, step=%d, action A=%s, reward=%d, max_Q=%.6f, min_Q=%.6f" % \
+                          (step, actionA, reward_n, np.max(best_act), np.min(best_act))
                 if reward_n > stage_reward:
                     stage_reward = reward_n
+                #END 
                 if terminal_n:
                     break
             # record reward
@@ -295,30 +378,34 @@ class DQNLearning(object):
                              (epoch, stage_step, stage_reward, max_reward))
 
 
-def parser_argument():
-    parse = argparse.ArgumentParser()
-    parse.add_argument("--play", action="store", help="play games, you can specify model file in model directory")
-    parse.add_argument("--train", action="store", help="train DQNetwork, game names is needed")
-    parse.add_argument("--gpu", action="store", default=0, help="specify gpu number")
-    args = parse.parse_args()
-    gpu = int(args.gpu)
-    if args.play is not None:
-        if not args.play.isdigit():
-            game_name = args.play
-        else:
-            game_name = "breakout"
-        dqn = DQNLearning(game_name, gpu=None)
-        dqn.play_game()
-    elif args.train is not None:
-        if not args.train.isdigit():
-            game_name = args.train
-        else:
-            game_name = "breakout"
-        dqn = DQNLearning(game_name, gpu=gpu)
-        dqn.train_net()
-    else:
-        parse.print_help()
 
 
-if __name__ == "__main__":
-    parser_argument()
+#TODO remove the parsing and the executable code at the end, this will be just a library
+
+#def parser_argument():
+#    parse = argparse.ArgumentParser()
+#    parse.add_argument("--play", action="store", help="play games, you can specify model file in model directory")
+#    parse.add_argument("--train", action="store", help="train DQNetwork, game names is needed")
+#    parse.add_argument("--gpu", action="store", default=0, help="specify gpu number")
+#    args = parse.parse_args()
+#    gpu = int(args.gpu)
+#    if args.play is not None:
+#        if not args.play.isdigit():
+#            game_name = args.play
+#        else:
+#            game_name = "breakout"
+#        dqn = DQNLearning(game_name, gpu=None)
+#        dqn.play_game()
+#    elif args.train is not None:
+#        if not args.train.isdigit():
+#            game_name = args.train
+#        else:
+#            game_name = "breakout"
+#        dqn = DQNLearning(game_name, gpu=gpu)
+#        dqn.train_net()
+#    else:
+#        parse.print_help()
+#
+#
+#if __name__ == "__main__":
+#    parser_argument()
