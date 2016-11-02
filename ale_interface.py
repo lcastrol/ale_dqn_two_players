@@ -56,7 +56,7 @@ class AleInterface(object):
         return reward
 
     def actAB(self, actionA, actionB):
-        reward = self.ale.actAB(self.actions[actionA],self.actionsB[actionB])
+        reward = self.ale.actAB(self.actions[actionA],self.actionsB[actionB-18])
         return reward
 
     def get_screen_gray(self):

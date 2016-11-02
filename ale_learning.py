@@ -50,7 +50,6 @@ class DQNLearning(object):
         self.action_repeat = args.action_repeat
 
         # Screen buffer for player B
-        
         self.buffer_length = 2
         self.buffer_count = 0
         self.screen_buffer = np.empty((self.buffer_length, args.screen_height, args.screen_width),
@@ -119,7 +118,6 @@ class DQNLearning(object):
         return sarsa_agent_inst
 
     def sarsa_get_observation(self,args):
-
         """ Resize and merge the previous two screen images """
         assert self.buffer_count >= 2
         index = self.buffer_count % self.buffer_length - 1
@@ -129,7 +127,6 @@ class DQNLearning(object):
 
     def sarsa_resize_image(self, image):
         """ Appropriately resize a single image """
-
         if self.resize_method == 'crop':
             # resize keeping aspect ratio
             resize_height = int(round(
@@ -207,18 +204,21 @@ class DQNLearning(object):
                 state_seq[:, :, i] = state
             stage_reward = 0
 
-            #TODO find a better way to do this
+            #TODO find a better way to do this not working right now
             #Initiallize B screen buffer
             legal_actionsB = self.game.ale.getLegalActionSetB()
-            print legal_actionsB[0]
-            #TODO fix a bug in actAB
             null_reward = self.game.actAB(0, 18)
+            index = self.buffer_count % self.buffer_length
+            self.ale.getScreenGrayscale(self.screen_buffer[index, ...])
+            self.buffer_count += 1
             null_reward = self.game.actAB(0, 18)
-
+            index = self.buffer_count % self.buffer_length
+            self.ale.getScreenGrayscale(self.screen_buffer[index, ...])
+            self.buffer_count += 1
 
             #B starts the episode
             actionB = self.sarsa_agent.start_episode(self.sarsa_get_observation(args))
-            
+
             while True:  # loop game frames
 
                 # select action player A
@@ -347,7 +347,7 @@ class DQNLearning(object):
                 else:
                     action = np.argmax(best_act)
                 # get action for player B
-                actionB = 1 #TODO
+                actionB = 19 #TODO
                 # carry out selected action
                 reward_n = self.game.actAB(action, actionB)
                 state_n = self.game.get_screen_rgb()
