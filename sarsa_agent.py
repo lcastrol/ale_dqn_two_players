@@ -97,7 +97,7 @@ class SARSALambdaAgent(object):
         reward = np.clip(reward, -1, 1)
         self.data_set.add_sample(self.last_img, self.last_action, reward)
 
-        action = self._choose_action(elf.epsilon, observation, reward)
+        action = self._choose_action(self.epsilon, observation, reward)
         
         loss = self._do_training()
         self.loss_averages.append(loss)
@@ -107,14 +107,14 @@ class SARSALambdaAgent(object):
 
     def _choose_action(self, epsilon, cur_img, reward):
         if self.step_counter >= self.phi_length:
-            phi = data_set.phi(cur_img)
+            phi = self.data_set.phi(cur_img)
             action = self.network.choose_action(phi, epsilon)
         else:
             action = self.rng.randint(0, self.num_actions)
         return action
 
     def _do_training(self):
-        state, action, reward, next_state, next_action = self.data_set.get_training_tuple()
+        state, action, reward, next_state, next_action = self.data_set.get_training_tuple(self.network.batch_size)
         return self.network.train(state, action, reward, next_state, next_action)
 
     def end_episode(self, reward, terminal=True):

@@ -63,6 +63,7 @@ class DeepQLearner:
         actions = T.icol('actions')
         terminals = T.icol('terminals')
 
+        #Here we create the states_shared
         self.states_shared = theano.shared(
             np.zeros((batch_size, num_frames, input_height, input_width),
                      dtype=theano.config.floatX))
@@ -181,8 +182,7 @@ class DeepQLearner:
 
         Arguments:
 
-        states - b x f x h x w numpy array, where b is batch size,
-                 f is num frames, h is height and w is width.
+        states - b x f x h x w numpy array, where b is batch size, f is num frames, h is height and w is width.
         actions - b x 1 numpy array of integers
         rewards - b x 1 numpy array
         next_states - b x f x h x w numpy array

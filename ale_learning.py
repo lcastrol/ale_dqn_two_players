@@ -19,7 +19,7 @@ from ale_util import logger
 from ale_net import DLNetwork
 from sarsa_agent import SARSALambdaAgent
 
-pygame.init()
+#pygame.init()
 
 class DQNLearning(object):
     def __init__(self, game_name, args):
@@ -96,7 +96,7 @@ class DQNLearning(object):
                                                    args.momentum_sarsa,
                                                    1,#clip_delta
                                                    10000,#freeze_interval
-                                                   32,#batch_size
+                                                   args.batch_size,#batch_size
                                                    args.network_type,
                                                    args.update_rule,
                                                    # args.lambda_decay, #batch_accumulator
@@ -185,67 +185,80 @@ class DQNLearning(object):
         step = 0
         epoch = 0
 
-
         while True:  # loop epochs
 
             epoch += 1
             # initial state
-            self.game.reset_game()
+            self.game.ale.reset_game()
 
             # two players mode switch
-            self.game.set_mode(1) 
+            self.game.ale.setMode(1) 
 
             # initial state sequences
             state_seq = np.empty((80, 80, self.frame_seq_num))
             for i in range(self.frame_seq_num):
-                state = self.game.get_screen_rgb()
+                state = self.game.ale.getScreenRGB()
                 self.show_screen(state)
                 state = self.process_snapshot(state)
                 state_seq[:, :, i] = state
             stage_reward = 0
 
-            #TODO find a better way to do this not working right now
+            #TODO find a better way to do this 
             #Initiallize B screen buffer
-            legal_actionsB = self.game.ale.getLegalActionSetB()
-            null_reward = self.game.actAB(0, 18)
+            self.logger.info("Initiallize screen buffer for player B")
+            #legal_actionsB = self.game.ale.getLegalActionSetB()
+
+            null_reward = self.game.ale.actAB(0, 18)
             index = self.buffer_count % self.buffer_length
             self.game.ale.getScreenGrayscale(self.screen_buffer[index, ...])
             self.buffer_count += 1
-            null_reward = self.game.actAB(0, 18)
+
+            null_reward = self.game.ale.actAB(0, 18)
             index = self.buffer_count % self.buffer_length
             self.game.ale.getScreenGrayscale(self.screen_buffer[index, ...])
             self.buffer_count += 1
 
             #B starts the episode
+            self.logger.info("Initiallize playerB")
             actionB = self.sarsa_agent.start_episode(self.sarsa_get_observation(args))
 
             while True:  # loop game frames
 
                 # select action player A
-                best_act = self.net.predict([state_seq])[0]
+                self.logger.info("Selecting player A action")
+
+                #TODO fix predict, this was working before
+                #best_act = self.net.predict([state_seq])[0]
+                best_act = np.empty([2, 2])
                 if random.random() <= epsilon or len(np.unique(best_act)) == 1:  # random select
                     actionA = random.randint(0, self.actions - 1)
                 else:
                     actionA = np.argmax(best_act)
+                #actionA = 1
+                self.logger.info("Action selected for player A actionA=%d" % (actionA))
 
                 # select action action for player B
                 actionB = self.sarsa_agent.step(stage_reward, self.sarsa_get_observation(args))
+                actionB += 18 #TODO fix this we must use just one value
+
+                self.logger.info("Action selected for player B actionB=%d" % (actionB))
 
                 # carry out selected action
-                reward_n = self.game.actAB(actionA, actionB)
+                reward_n = self.game.ale.actAB(actionA, actionB)
 
                 # get observation for player A
-                state_n = self.game.get_screen_rgb()
+                state_n = self.game.ale.getScreenRGB()
                 self.show_screen(state)
                 state_n = self.process_snapshot(state_n)
                 state_n = np.reshape(state_n, (80, 80, 1))
                 state_seq_n = np.append(state_n, state_seq[:, :, : (self.frame_seq_num - 1)], axis=2)
+                self.logger.info("Player A observation over")
 
                 # get observation for player B
 
-
                 #check game over state
-                terminal_n = self.game.game_over()
+                terminal_n = self.game.ale.game_over()
+
                 #TODO add frame limit
 
                 # scale down epsilon
@@ -308,9 +321,12 @@ class DQNLearning(object):
                 #END 
                 if terminal_n:
                     break
+
             # record reward
             if stage_reward > max_reward:
                 max_reward = stage_reward
+            
+            # log end of session
             self.logger.info(
                 "epoch=%d, state=%s, step=%d(%d), max_reward=%d, epsilon=%.5f, reward=%d, max_Q=%.6f" %
                 (epoch, state_desc, step, global_step, max_reward, epsilon, stage_reward, np.max(best_act)))
@@ -323,6 +339,7 @@ class DQNLearning(object):
         if epsilon == 0.0:
             epsilon, _ = self.param_unserierlize()
         while True:  # epoch
+
             epoch += 1
             self.logger.info("game start...")
             # init state
@@ -346,8 +363,10 @@ class DQNLearning(object):
                     action = random.randint(0, self.actions - 1)
                 else:
                     action = np.argmax(best_act)
+
                 # get action for player B
                 actionB = 19 #TODO
+
                 # carry out selected action
                 reward_n = self.game.actAB(action, actionB)
                 state_n = self.game.get_screen_rgb()
