@@ -8,8 +8,11 @@ class DataSet(object):
 
     def __init__(self, height, width, phi_length, rng):
 
-        self.height = height
-        self.width = width
+        #self.height = height
+        #self.width = width
+        #TODO temporal fix, this shouldn't be hardcoded
+        self.height = 80 
+        self.width = 80 
         self.phi_length = phi_length
         self.max_steps = phi_length * 2
         self.rng = rng

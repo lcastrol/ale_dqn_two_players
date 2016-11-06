@@ -52,7 +52,7 @@ class DQNLearning(object):
         # Screen buffer for player B
         self.buffer_length = 2
         self.buffer_count = 0
-        self.screen_buffer = np.empty((self.buffer_length, args.screen_height, args.screen_width),
+        self.screen_buffer = np.empty((self.buffer_length, 80, 80),
                                       dtype=np.uint8)
 
         self.frame_seq_num = args.frame_seq_num
@@ -118,14 +118,17 @@ class DQNLearning(object):
         return sarsa_agent_inst
 
     def sarsa_get_observation(self,args):
+
         """ Resize and merge the previous two screen images """
         assert self.buffer_count >= 2
         index = self.buffer_count % self.buffer_length - 1
         max_image = np.maximum(self.screen_buffer[index, ...],
                                self.screen_buffer[index - 1, ...])
-        return self.sarsa_resize_image(max_image, args)
+        return max_image
+        #return self.sarsa_resize_image(max_image, args)
 
     def sarsa_resize_image(self, image, args):
+
         """ Appropriately resize a single image """
         if args.resize_method == 'crop':
             # resize keeping aspect ratio
@@ -148,6 +151,18 @@ class DQNLearning(object):
                               interpolation=cv2.INTER_LINEAR)
         else:
             raise ValueError('Unrecognized image resize method.')
+
+    def sarsa_screen_buffer_init(self):
+
+        null_reward = self.game.ale.actAB(0, 18)
+        index = self.buffer_count % self.buffer_length
+        self.game.ale.getScreenGrayscale(self.screen_buffer[index, ...])
+        self.buffer_count += 1
+
+        null_reward = self.game.ale.actAB(0, 18)
+        index = self.buffer_count % self.buffer_length
+        self.game.ale.getScreenGrayscale(self.screen_buffer[index, ...])
+        self.buffer_count += 1
 
     def param_serierlize(self, epsilon, step):
         json.dump({"epsilon": epsilon, "step": step}, open(self.param_file, "w"))
@@ -208,19 +223,13 @@ class DQNLearning(object):
             self.logger.info("Initiallize screen buffer for player B")
             #legal_actionsB = self.game.ale.getLegalActionSetB()
 
-            null_reward = self.game.ale.actAB(0, 18)
-            index = self.buffer_count % self.buffer_length
-            self.game.ale.getScreenGrayscale(self.screen_buffer[index, ...])
-            self.buffer_count += 1
-
-            null_reward = self.game.ale.actAB(0, 18)
-            index = self.buffer_count % self.buffer_length
-            self.game.ale.getScreenGrayscale(self.screen_buffer[index, ...])
-            self.buffer_count += 1
+            #Initiallize the screen buffer
+            #TODO: here is a hint, the screen_buffer_init is screwing with the predict function
+            #sarsa_screen_buffer_init()
 
             #B starts the episode
-            self.logger.info("Initiallize playerB")
-            actionB = self.sarsa_agent.start_episode(self.sarsa_get_observation(args))
+            playerB_is_uninitiallized = True 
+            #actionB = 0
 
             while True:  # loop game frames
 
@@ -228,18 +237,28 @@ class DQNLearning(object):
                 self.logger.info("Selecting player A action")
 
                 #TODO fix predict, this was working before
-                #best_act = self.net.predict([state_seq])[0]
-                best_act = np.empty([2, 2])
+                best_act = self.net.predict([state_seq])[0]
+                #best_act = np.empty([2, 2])
+                
                 if random.random() <= epsilon or len(np.unique(best_act)) == 1:  # random select
                     actionA = random.randint(0, self.actions - 1)
                 else:
                     actionA = np.argmax(best_act)
+                #TODO prevent player A to take actions on the first two frames to add fairness
                 #actionA = 1
                 self.logger.info("Action selected for player A actionA=%d" % (actionA))
 
                 # select action action for player B
-                actionB = self.sarsa_agent.step(stage_reward, self.sarsa_get_observation(args))
-                actionB += 18 #TODO fix this we must use just one value
+                if self.buffer_count >= self.buffer_length+1:
+                    if (playerB_is_uninitiallized == True):
+                        self.logger.info("Initiallize playerB")
+                        actionB = self.sarsa_agent.start_episode(self.sarsa_get_observation(args))
+                        actionB += 18 #TODO again fix this, it is anoying!!
+                        playerB_is_uninitiallized = False
+                    else:
+                        actionB = self.sarsa_agent.step(stage_reward, playerB_observation)
+                else: 
+                    actionB = 18 #TODO fix this we must use just one value
 
                 self.logger.info("Action selected for player B actionB=%d" % (actionB))
 
@@ -248,13 +267,25 @@ class DQNLearning(object):
 
                 # get observation for player A
                 state_n = self.game.ale.getScreenRGB()
-                self.show_screen(state)
-                state_n = self.process_snapshot(state_n)
-                state_n = np.reshape(state_n, (80, 80, 1))
+                #self.show_screen(state)
+                state_n_grayscale = self.process_snapshot(state_n)
+                state_n = np.reshape(state_n_grayscale, (80, 80, 1))
                 state_seq_n = np.append(state_n, state_seq[:, :, : (self.frame_seq_num - 1)], axis=2)
                 self.logger.info("Player A observation over")
 
                 # get observation for player B
+                self.logger.info("Player A observation over")
+                screen_buffer_index = self.buffer_count % self.buffer_length
+                self.screen_buffer[screen_buffer_index, ...] = state_n_grayscale 
+                #wait until the buffer is full
+                if self.buffer_count >= self.buffer_length:
+                    playerB_observation = self.sarsa_get_observation(args) 
+
+                #overflow reset
+                if self.buffer_count == (10*self.buffer_length):
+                    self.buffer_count = self.buffer_length + 1
+                else:
+                    self.buffer_count += 1
 
                 #check game over state
                 terminal_n = self.game.ale.game_over()

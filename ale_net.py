@@ -9,7 +9,9 @@ from ale_util import logger
 
 
 class DLNetwork(object):
+
     def __init__(self, game_name, action_num, args):
+
         self.model_dir = args.saved_model_dir
         if self.model_dir == "":
             self.model_dir = "./saved_networks/%s" % game_name
@@ -17,6 +19,7 @@ class DLNetwork(object):
             os.makedirs(self.model_dir)
         self.actions = action_num
         self.frame_freq_num = args.frame_seq_num
+
         # tensorflow session
         # self.session = tf.InteractiveSession()
         self.session = tf.Session(config=tf.ConfigProto(log_device_placement=True, allow_soft_placement=True))
