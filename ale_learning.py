@@ -85,8 +85,11 @@ class DQNLearning(object):
             #New network creation
             self.logger.info("Creating network for SARSA")
             #TODO a lot of missing arguments where found, now i have serious doubts about this code working
-            sarsa_network = q_network.DeepQLearner(args.screen_width,
-                                                   args.screen_height,
+            sarsa_network = q_network.DeepQLearner(
+                                                   #args.screen_width,
+                                                   #args.screen_height,
+                                                   80, #TODO, fix this, hardcoding is terrible
+                                                   80, #TODO, fix this, hardcoding is terrible
                                                    self.actionsB,
                                                    args.phi_length, #num_frames
                                                    args.discount,
@@ -220,7 +223,7 @@ class DQNLearning(object):
 
             #TODO find a better way to do this 
             #Initiallize B screen buffer
-            self.logger.info("Initiallize screen buffer for player B")
+            #self.logger.info("Initiallize screen buffer for player B")
             #legal_actionsB = self.game.ale.getLegalActionSetB()
 
             #Initiallize the screen buffer
@@ -233,22 +236,19 @@ class DQNLearning(object):
 
             while True:  # loop game frames
 
-                # select action player A
+                # Select action player A
                 self.logger.info("Selecting player A action")
-
-                #TODO fix predict, this was working before
                 best_act = self.net.predict([state_seq])[0]
-                #best_act = np.empty([2, 2])
                 
                 if random.random() <= epsilon or len(np.unique(best_act)) == 1:  # random select
                     actionA = random.randint(0, self.actions - 1)
                 else:
                     actionA = np.argmax(best_act)
+
                 #TODO prevent player A to take actions on the first two frames to add fairness
-                #actionA = 1
                 self.logger.info("Action selected for player A actionA=%d" % (actionA))
 
-                # select action action for player B
+                # Select action player B
                 if self.buffer_count >= self.buffer_length+1:
                     if (playerB_is_uninitiallized == True):
                         self.logger.info("Initiallize playerB")
@@ -262,19 +262,17 @@ class DQNLearning(object):
 
                 self.logger.info("Action selected for player B actionB=%d" % (actionB))
 
-                # carry out selected action
+                # Carry out selected actions
                 reward_n = self.game.ale.actAB(actionA, actionB)
 
                 # get observation for player A
                 state_n = self.game.ale.getScreenRGB()
-                #self.show_screen(state)
                 state_n_grayscale = self.process_snapshot(state_n)
                 state_n = np.reshape(state_n_grayscale, (80, 80, 1))
                 state_seq_n = np.append(state_n, state_seq[:, :, : (self.frame_seq_num - 1)], axis=2)
                 self.logger.info("Player A observation over")
 
                 # get observation for player B
-                self.logger.info("Player A observation over")
                 screen_buffer_index = self.buffer_count % self.buffer_length
                 self.screen_buffer[screen_buffer_index, ...] = state_n_grayscale 
                 #wait until the buffer is full
@@ -286,6 +284,7 @@ class DQNLearning(object):
                     self.buffer_count = self.buffer_length + 1
                 else:
                     self.buffer_count += 1
+                self.logger.info("Player B observation over")
 
                 #check game over state
                 terminal_n = self.game.ale.game_over()
