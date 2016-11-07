@@ -94,7 +94,7 @@ class SARSALambdaAgent(object):
         self.step_counter += 1
         self.epsilon = max(self.epsilon_min, self.epsilon - self.epsilon_rate)
 
-        reward = np.clip(reward, -1, 1)
+        #reward = np.clip(reward, -1, 1)
         self.data_set.add_sample(self.last_img, self.last_action, reward)
 
         action = self._choose_action(self.epsilon, observation, reward)
@@ -128,11 +128,12 @@ class SARSALambdaAgent(object):
         Returns:
             None
         """
+        #reward = np.clip(reward, -1, 1)
         self.episode_reward += reward
         self.step_counter += 1
         total_time = time.time() - self.start_time
 
-        self.data_set.add_sample(self.last_img, self.last_action, np.clip(reward, -1, 1), True)
+        self.data_set.add_sample(self.last_img, self.last_action, reward)
 
         logging.info("steps/second: {:.2f}".format(self.step_counter/total_time))
 

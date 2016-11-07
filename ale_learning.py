@@ -36,6 +36,9 @@ class DQNLearning(object):
         self.actions = self.game.get_actions_num()
         self.actionsB = self.game.get_actions_numB()
 
+        #set the number of iterations
+        self.iterations = args.iterations
+
         # DQN parameters
         self.observe = args.observe
         self.explore = args.explore
@@ -202,6 +205,7 @@ class DQNLearning(object):
         epsilon, global_step = self.param_unserierlize()
         step = 0
         epoch = 0
+        max_game_iterations = self.iterations
 
         while True:  # loop epochs
 
@@ -240,12 +244,15 @@ class DQNLearning(object):
                 self.logger.info("Selecting player A action")
                 best_act = self.net.predict([state_seq])[0]
                 
-                if random.random() <= epsilon or len(np.unique(best_act)) == 1:  # random select
-                    actionA = random.randint(0, self.actions - 1)
+                # Prevent player A to take actions on the first two frames to add fairness
+                if step < 2:
+                    actionA = 0
                 else:
-                    actionA = np.argmax(best_act)
+                    if random.random() <= epsilon or len(np.unique(best_act)) == 1:  # random select
+                        actionA = random.randint(0, self.actions - 1)
+                    else:
+                        actionA = np.argmax(best_act)
 
-                #TODO prevent player A to take actions on the first two frames to add fairness
                 self.logger.info("Action selected for player A actionA=%d" % (actionA))
 
                 # Select action player B
@@ -256,7 +263,7 @@ class DQNLearning(object):
                         actionB += 18 #TODO again fix this, it is anoying!!
                         playerB_is_uninitiallized = False
                     else:
-                        actionB = self.sarsa_agent.step(stage_reward, playerB_observation)
+                        actionB = self.sarsa_agent.step(-reward_n, playerB_observation)
                         actionB += 18 #TODO again fix this, it is anoying!!
                 else: 
                     actionB = 18 #TODO fix this we must use just one value
@@ -345,12 +352,13 @@ class DQNLearning(object):
                     state_desc = "train"
 
                 # record reward
-                print "game running, step=%d, action A=%s, reward=%d, max_Q=%.6f, min_Q=%.6f" % \
-                          (step, actionA, reward_n, np.max(best_act), np.min(best_act))
+                print "game running, step=%d, action A=%s, action B=%s reward=%d, max_Q=%.6f, min_Q=%.6f" % \
+                          (step, actionA, actionB, reward_n, np.max(best_act), np.min(best_act))
                 if reward_n > stage_reward:
                     stage_reward = reward_n
                 #END 
                 if terminal_n:
+                    self.sarsa_agent.end_episode(-reward_n)
                     break
 
             # record reward
@@ -361,6 +369,12 @@ class DQNLearning(object):
             self.logger.info(
                 "epoch=%d, state=%s, step=%d(%d), max_reward=%d, epsilon=%.5f, reward=%d, max_Q=%.6f" %
                 (epoch, state_desc, step, global_step, max_reward, epsilon, stage_reward, np.max(best_act)))
+
+
+            # break the loop after max_game_iterations
+            if epoch >= max_game_iterations:
+                self.sarsa_agent.finish_epoch(epoch)
+                break
 
     def play_game(self, epsilon):
 
@@ -427,6 +441,9 @@ class DQNLearning(object):
             self.logger.info("game over, epoch=%d, step=%d, reward=%d, max_reward=%d" %
                              (epoch, stage_step, stage_reward, max_reward))
 
+            # break the loop after max_game_iterations
+            if epoch >= max_game_iterations:
+                break
 
 
 

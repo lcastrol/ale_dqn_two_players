@@ -14,6 +14,7 @@ def parser_argument():
     parse = argparse.ArgumentParser()
     parse.add_argument("--game", type=str, help="game name")
     parse.add_argument("--handle", type=str, help="\"train\" or \"play\"")
+    parse.add_argument("--iterations", type=int, default=10000, help="number of game iterations to play / train")
 
     # env_args = parse.add_argument_group("ALE_Interface")
     parse.add_argument("--display_screen", type=str2bool, default=True, help="whether to display screen")
