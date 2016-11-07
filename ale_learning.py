@@ -257,6 +257,7 @@ class DQNLearning(object):
                         playerB_is_uninitiallized = False
                     else:
                         actionB = self.sarsa_agent.step(stage_reward, playerB_observation)
+                        actionB += 18 #TODO again fix this, it is anoying!!
                 else: 
                     actionB = 18 #TODO fix this we must use just one value
 
