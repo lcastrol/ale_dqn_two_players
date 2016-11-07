@@ -1,4 +1,3 @@
-#!/usr/bin/python
 #  -*- coding: utf-8 -*-
 # based on the code of:  <yao62995@gmail.com> 
 # modifications by: Luis Castro and Jens Rowekamp 
@@ -445,34 +444,3 @@ class DQNLearning(object):
             if epoch >= max_game_iterations:
                 break
 
-
-
-#TODO remove the parsing and the executable code at the end, this will be just a library
-
-#def parser_argument():
-#    parse = argparse.ArgumentParser()
-#    parse.add_argument("--play", action="store", help="play games, you can specify model file in model directory")
-#    parse.add_argument("--train", action="store", help="train DQNetwork, game names is needed")
-#    parse.add_argument("--gpu", action="store", default=0, help="specify gpu number")
-#    args = parse.parse_args()
-#    gpu = int(args.gpu)
-#    if args.play is not None:
-#        if not args.play.isdigit():
-#            game_name = args.play
-#        else:
-#            game_name = "breakout"
-#        dqn = DQNLearning(game_name, gpu=None)
-#        dqn.play_game()
-#    elif args.train is not None:
-#        if not args.train.isdigit():
-#            game_name = args.train
-#        else:
-#            game_name = "breakout"
-#        dqn = DQNLearning(game_name, gpu=gpu)
-#        dqn.train_net()
-#    else:
-#        parse.print_help()
-#
-#
-#if __name__ == "__main__":
-#    parser_argument()
