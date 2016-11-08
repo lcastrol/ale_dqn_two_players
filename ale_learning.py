@@ -9,16 +9,14 @@ import time
 import json
 import numpy as np
 import cv2
-import pygame
 import q_network
 
 from ale_interface import AleInterface
 from collections import deque
-from ale_util import logger
+from ale_util import Logger
 from ale_net import DLNetwork
 from sarsa_agent import SARSALambdaAgent
 
-#pygame.init()
 
 class ALEtestbench(object):
     def __init__(self, game_name, args):
@@ -27,7 +25,7 @@ class ALEtestbench(object):
         self.game_name = game_name
 
         # Initialize logger
-        self.logger = logger
+        self.logger = Logger("./log", self.game_name)
 
         # Initiallize ALE
         self.game = AleInterface(game_name, args)
@@ -64,16 +62,11 @@ class ALEtestbench(object):
 
         # Player A
         # DQN network
-        self.net = DLNetwork(game_name, self.actions, args)
+        self.net = DLNetwork(game_name, self.actions, self.logger, args)
 
         # Player B
         # SARSA learner and network
         self.sarsa_agent = self.sarsa_init(args)
-
-        # screen parameters
-        # self.screen = (args.screen_width, args.screen_height)
-        # pygame.display.set_caption(game_name)
-        # self.display = pygame.display.set_mode(self.screen)
 
         # Experience double ended queue
         self.deque = deque()
@@ -81,7 +74,8 @@ class ALEtestbench(object):
     #SARSA agent init
     def sarsa_init(self, args):
 
-        rng = np.random.RandomState(123456) #TODO add a random number generator
+        random_seed = random.randint(0,20)
+        rng = np.random.RandomState(random_seed)
 
         if args.nn_file is None:
             # New network creation
@@ -172,15 +166,6 @@ class ALEtestbench(object):
         # image binary
         # _, snap_shot = cv2.threshold(snap_shot, 1, 255, cv2.THRESH_BINARY)
         return snap_shot
-
-    #def show_screen(self, np_array):
-    #    return
-        # np_array = cv2.resize(np_array, self.screen)
-        # surface = pygame.surfarray.make_surface(np_array)
-        # surface = pygame.transform.rotate(surface, 270)
-        # rect = pygame.draw.rect(self.display, (255, 255, 255), (0, 0, self.screen[0], self.screen[1]))
-        # self.display.blit(surface, rect)
-        # pygame.display.update()
 
     """ Training function, this is the main loop for training """
     def train_net(self, args):
@@ -316,10 +301,11 @@ class ALEtestbench(object):
 
                 # update state
                 state_seq = state_seq_n
-                step += 1
-                # serierlize param
 
-                # save network model
+                # Increase step counter
+                step += 1
+
+                # Save network model
                 if step % self.save_model_freq == 0:
                     global_step += step
                     self.param_serierlize(epsilon, global_step)
@@ -338,6 +324,8 @@ class ALEtestbench(object):
                 print "game running, step=%d, action A=%s, action B=%s reward=%d, max_Q=%.6f, min_Q=%.6f" % \
                           (step, actionA, actionB, reward_n, np.max(best_act), np.min(best_act))
 
+                self.logger.exp([step, actionA, actionB, reward_n, np.max(best_act), np.min(best_act)])
+
                 # Record max episode reward
                 if reward_n > stage_reward:
                     stage_reward = reward_n
@@ -353,12 +341,12 @@ class ALEtestbench(object):
             if stage_reward > max_reward:
                 max_reward = stage_reward
 
-            # log end of session
+            # Log end of session
             self.logger.info(
                 "epoch=%d, state=%s, step=%d(%d), max_reward=%d, epsilon=%.5f, reward=%d, max_Q=%.6f" %
                 (epoch, state_desc, step, global_step, max_reward, epsilon, stage_reward, np.max(best_act)))
 
-            # break the loop after max_game_iterations
+            # Break the loop after max_game_iterations
             if epoch >= max_game_iterations:
                 self.sarsa_agent.finish_epoch(epoch)
                 break

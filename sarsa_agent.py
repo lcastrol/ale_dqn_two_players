@@ -5,13 +5,12 @@ The SARSALambdaAgent class wraps a deep SARSA network
 import os
 import cPickle
 import time
-import logging
+import ale_data_set
+#import logging
+import sys
 
 import numpy as np
 
-import ale_data_set
-
-import sys
 sys.setrecursionlimit(10000)
 
 class SARSALambdaAgent(object):
@@ -50,11 +49,10 @@ class SARSALambdaAgent(object):
         else:
             self.epsilon_rate = 0
 
-        self._open_results_file()
-        self._open_learning_file()
+        #self._open_results_file()
+        #self._open_learning_file()
 
         self.episode_counter = 0
-
         self.last_img = None
         self.last_action = None
 
@@ -98,7 +96,7 @@ class SARSALambdaAgent(object):
         self.data_set.add_sample(self.last_img, self.last_action, reward)
 
         action = self._choose_action(self.epsilon, observation, reward)
-        
+
         loss = self._do_training()
         self.loss_averages.append(loss)
         self.last_action = action
@@ -135,38 +133,38 @@ class SARSALambdaAgent(object):
 
         self.data_set.add_sample(self.last_img, self.last_action, reward)
 
-        logging.info("steps/second: {:.2f}".format(self.step_counter/total_time))
+        #logging.info("steps/second: {:.2f}".format(self.step_counter/total_time))
 
-        self._update_learning_file()
-        logging.info("average loss: {:.4f}".format(np.mean(self.loss_averages)))
+        #self._update_learning_file()
+        #logging.info("average loss: {:.4f}".format(np.mean(self.loss_averages)))
 
     def finish_epoch(self, epoch):
         net_file = open(self.exp_dir + '/network_file_' + str(epoch) + '.pkl', 'w')
         cPickle.dump(self.network, net_file, -1)
         net_file.close()
 
-    def _open_results_file(self):
-        logging.info("OPENING " + self.exp_dir + '/results.csv')
-        self.results_file = open(self.exp_dir + '/results.csv', 'w', 0)
-        self.results_file.write(\
-            'epoch,num_episodes,total_reward,reward_per_epoch\n')
-        self.results_file.flush()
-
-    def _open_learning_file(self):
-        self.learning_file = open(self.exp_dir + '/learning.csv', 'w', 0)
-        self.learning_file.write('mean_loss,epsilon\n')
-        self.learning_file.flush()
-
-    def _update_results_file(self, epoch, num_episodes):
-        out = "{},{},{},{}\n".format(epoch, num_episodes, self.total_reward,
-                            self.total_reward / float(num_episodes))
-        self.results_file.write(out)
-        self.results_file.flush()
-
-    def _update_learning_file(self):
-        out = "{},{}\n".format(np.mean(self.loss_averages), self.epsilon)
-        self.learning_file.write(out)
-        self.learning_file.flush()
+#    def _open_results_file(self):
+#        logging.info("OPENING " + self.exp_dir + '/results.csv')
+#        self.results_file = open(self.exp_dir + '/results.csv', 'w', 0)
+#        self.results_file.write(\
+#            'epoch,num_episodes,total_reward,reward_per_epoch\n')
+#        self.results_file.flush()
+#
+#    def _open_learning_file(self):
+#        self.learning_file = open(self.exp_dir + '/learning.csv', 'w', 0)
+#        self.learning_file.write('mean_loss,epsilon\n')
+#        self.learning_file.flush()
+#
+#    def _update_results_file(self, epoch, num_episodes):
+#        out = "{},{},{},{}\n".format(epoch, num_episodes, self.total_reward,
+#                            self.total_reward / float(num_episodes))
+#        self.results_file.write(out)
+#        self.results_file.flush()
+#
+#    def _update_learning_file(self):
+#        out = "{},{}\n".format(np.mean(self.loss_averages), self.epsilon)
+#        self.learning_file.write(out)
+#        self.learning_file.flush()
 
 if __name__ == "__main__":
     pass

@@ -1,22 +1,27 @@
 #!/usr/bin/python
 #  -*- coding: utf-8 -*-
-# author:  <yao62995@gmail.com> 
+# author:  <yao62995@gmail.com>
+# modifications by: Luis Castro and Jens Rowekamp
 
 import os
 import sys
 import time
 
 class Logger(object):
-    def __init__(self, log_dir, debug=False):
+
+    def __init__(self, log_dir, game_name, debug=False):
         self._log_dir = log_dir
+        self._game_name = game_name
         if not os.path.exists(self._log_dir):
             os.mkdir(self._log_dir)
         self._debug = debug
         self.DATE_FORMAT = "%Y-%m-%d"
         self.DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
         self._log_date = self._curdate()
-        self._logfile = "%s/%s.log" % (self._log_dir, self._log_date)
+        self._logfile = "%s/%s_%s.log" % (self._log_dir, self._game_name, self._log_date)
+        self._expdatafile = "%s/%s_%s.csv" % (self._log_dir, self._game_name, int(time.time()))
         self._logger = open(self._logfile, 'a+')
+        self._expdata = open(self._expdatafile, 'a+')
 
     def _curdate(self):
         return time.strftime(self.DATE_FORMAT, time.localtime())
@@ -60,4 +65,14 @@ class Logger(object):
         if to_exit:
             sys.exit(-1)
 
-logger = Logger(log_dir="./log")
+    def exp(self, data_line):
+        msg = ""
+        if len(data_line) > 1:
+            for sample in range(0,(len(data_line) - 1)):
+                msg += "%s," % (sample)
+            msg += "%s" % (data_line[0])
+        elif len(data_line) == 1:
+            msg = "%s" % (data_line[0])
+        self._expdata.write("%s\n" % msg)
+
+#logger = Logger(log_dir="./log")

@@ -1,16 +1,13 @@
 #!/usr/bin/python
 #  -*- coding: utf-8 -*-
-# author:  <yao62995@gmail.com> 
+# author:  <yao62995@gmail.com>
 
 import os
 import tensorflow as tf
 
-from ale_util import logger
-
-
 class DLNetwork(object):
 
-    def __init__(self, game_name, action_num, args):
+    def __init__(self, game_name, action_num, logger, args):
 
         self.model_dir = args.saved_model_dir
         if self.model_dir == "":
@@ -19,6 +16,7 @@ class DLNetwork(object):
             os.makedirs(self.model_dir)
         self.actions = action_num
         self.frame_freq_num = args.frame_seq_num
+        self.logger = logger
 
         # tensorflow session
         # self.session = tf.InteractiveSession()
@@ -74,14 +72,14 @@ class DLNetwork(object):
         if model_file is not None:
             model_file_path = "%s/%s" % (self.model_dir, model_file)
             self.saver.restore(self.session, model_file_path)
-            logger.info("Successfully loaded: %s" % model_file_path)
+            self.logger.info("Successfully loaded: %s" % model_file_path)
         else:
             checkpoint = tf.train.get_checkpoint_state(self.model_dir)
             if checkpoint and checkpoint.model_checkpoint_path:
                 self.saver.restore(self.session, checkpoint.model_checkpoint_path)
-                logger.info("Successfully loaded: %s" % checkpoint.model_checkpoint_path)
+                self.logger.info("Successfully loaded: %s" % checkpoint.model_checkpoint_path)
             else:
-                logger.warn("Could not find old network weights")
+                self.logger.warn("Could not find old network weights")
 
     def save_model(self, prefix, global_step):
         self.saver.save(self.session, self.model_dir + "/" + prefix, global_step=global_step)
