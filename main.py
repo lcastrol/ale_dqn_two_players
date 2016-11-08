@@ -1,11 +1,11 @@
 #!/usr/bin/python
 #  -*- coding: utf-8 -*-
-# author:  <yao62995@gmail.com> 
+# author:  <yao62995@gmail.com>
 
 from defaults import defaults
 
 import argparse
-from ale_learning import DQNLearning
+from ale_learning import ALEtestbench
 
 def str2bool(v):
   return v.lower() in ("yes", "true", "t", "1")
@@ -74,8 +74,9 @@ def parser_argument():
     # parameter for play
     parse.add_argument("--play_epsilon", type=float, default=0.0, help="a float value in [0, 1), 0 means use global train epsilon")
 
-    #Parse the arguments 
+    #Parse the arguments
     args = parse.parse_args()
+
     #TODO this can be done with the "required" flag within the parsing of the argument
     if args.game is None or args.handle is None:
         parse.print_help()
@@ -87,17 +88,16 @@ def parser_argument():
     #Assign a prefix
     #TODO add a time stamp to the prefix
     if args.experiment_prefix is None:
-        args.experiment_prefix = args.game 
+        args.experiment_prefix = args.game
 
     #Generate the experiment wrapper
-    dqn = DQNLearning(args.game, args)
+    ale_testbench = ALEtestbench(args.game, args)
 
     #Trigger the experiment depending on the mode play|train
     if args.handle == "train":
-        dqn.train_net(args)
+        ale_testbench.train_net(args)
     else:
-        dqn.play_game(args.play_epsilon)
-
+        ale_testbench.play_game(args.play_epsilon)
 
 if __name__ == "__main__":
     parser_argument()

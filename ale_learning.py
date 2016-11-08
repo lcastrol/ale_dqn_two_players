@@ -1,6 +1,6 @@
 #  -*- coding: utf-8 -*-
-# based on the code of:  <yao62995@gmail.com> 
-# modifications by: Luis Castro and Jens Rowekamp 
+# based on the code of:  <yao62995@gmail.com>
+# modifications by: Luis Castro and Jens Rowekamp
 
 import os
 import random
@@ -20,22 +20,22 @@ from sarsa_agent import SARSALambdaAgent
 
 #pygame.init()
 
-class DQNLearning(object):
+class ALEtestbench(object):
     def __init__(self, game_name, args):
 
-        #save game name
+        # Save game name
         self.game_name = game_name
 
-        #Initialize logger
+        # Initialize logger
         self.logger = logger
 
-        #initiallize ALE
+        # Initiallize ALE
         self.game = AleInterface(game_name, args)
 
         self.actions = self.game.get_actions_num()
         self.actionsB = self.game.get_actions_numB()
 
-        #set the number of iterations
+        # Set the number of iterations
         self.iterations = args.iterations
 
         # DQN parameters
@@ -47,9 +47,9 @@ class DQNLearning(object):
         self.init_epsilon = args.init_epsilon
         self.final_epsilon = args.final_epsilon
         self.save_model_freq = args.save_model_freq
-
         self.update_frequency = args.update_frequency
         self.action_repeat = args.action_repeat
+        self.frame_seq_num = args.frame_seq_num
 
         # Screen buffer for player B
         self.buffer_length = 2
@@ -57,7 +57,6 @@ class DQNLearning(object):
         self.screen_buffer = np.empty((self.buffer_length, 80, 80),
                                       dtype=np.uint8)
 
-        self.frame_seq_num = args.frame_seq_num
         if args.saved_model_dir == "":
             self.param_file = "./saved_networks/%s.json" % game_name
         else:
@@ -68,7 +67,7 @@ class DQNLearning(object):
         self.net = DLNetwork(game_name, self.actions, args)
 
         # Player B
-        # SARSA 
+        # SARSA learner and network
         self.sarsa_agent = self.sarsa_init(args)
 
         # screen parameters
@@ -76,17 +75,17 @@ class DQNLearning(object):
         # pygame.display.set_caption(game_name)
         # self.display = pygame.display.set_mode(self.screen)
 
+        # Experience double ended queue
         self.deque = deque()
 
-    #SARSA agent init 
+    #SARSA agent init
     def sarsa_init(self, args):
-        
+
         rng = np.random.RandomState(123456) #TODO add a random number generator
 
         if args.nn_file is None:
-            #New network creation
+            # New network creation
             self.logger.info("Creating network for SARSA")
-            #TODO a lot of missing arguments where found, now i have serious doubts about this code working
             sarsa_network = q_network.DeepQLearner(
                                                    #args.screen_width,
                                                    #args.screen_height,
@@ -122,9 +121,9 @@ class DQNLearning(object):
 
         return sarsa_agent_inst
 
+    """ Merge the previous two screen images """
     def sarsa_get_observation(self,args):
 
-        """ Resize and merge the previous two screen images """
         assert self.buffer_count >= 2
         index = self.buffer_count % self.buffer_length - 1
         max_image = np.maximum(self.screen_buffer[index, ...],
@@ -132,9 +131,9 @@ class DQNLearning(object):
         return max_image
         #return self.sarsa_resize_image(max_image, args)
 
+    """ Appropriately resize a single image """
     def sarsa_resize_image(self, image, args):
 
-        """ Appropriately resize a single image """
         if args.resize_method == 'crop':
             # resize keeping aspect ratio
             resize_height = int(round(
@@ -157,18 +156,6 @@ class DQNLearning(object):
         else:
             raise ValueError('Unrecognized image resize method.')
 
-    def sarsa_screen_buffer_init(self):
-
-        null_reward = self.game.ale.actAB(0, 18)
-        index = self.buffer_count % self.buffer_length
-        self.game.ale.getScreenGrayscale(self.screen_buffer[index, ...])
-        self.buffer_count += 1
-
-        null_reward = self.game.ale.actAB(0, 18)
-        index = self.buffer_count % self.buffer_length
-        self.game.ale.getScreenGrayscale(self.screen_buffer[index, ...])
-        self.buffer_count += 1
-
     def param_serierlize(self, epsilon, step):
         json.dump({"epsilon": epsilon, "step": step}, open(self.param_file, "w"))
 
@@ -186,8 +173,8 @@ class DQNLearning(object):
         # _, snap_shot = cv2.threshold(snap_shot, 1, 255, cv2.THRESH_BINARY)
         return snap_shot
 
-    def show_screen(self, np_array):
-        return
+    #def show_screen(self, np_array):
+    #    return
         # np_array = cv2.resize(np_array, self.screen)
         # surface = pygame.surfarray.make_surface(np_array)
         # surface = pygame.transform.rotate(surface, 270)
@@ -195,58 +182,54 @@ class DQNLearning(object):
         # self.display.blit(surface, rect)
         # pygame.display.update()
 
+    """ Training function, this is the main loop for training """
     def train_net(self, args):
 
         self.logger.info("Training starting...")
 
-        # training
+        # Initiallize variables
         max_reward = 0
         epsilon, global_step = self.param_unserierlize()
         step = 0
         epoch = 0
         max_game_iterations = self.iterations
 
-        while True:  # loop epochs
+        # Epochs loop
+        while True:
 
+            # Epoch|Iteration counter
             epoch += 1
+
             # initial state
             self.game.ale.reset_game()
 
-            # two players mode switch
-            self.game.ale.setMode(1) 
+            # Two players mode switch ON
+            self.game.ale.setMode(1)
 
-            # initial state sequences
+            # Initial state sequences
             state_seq = np.empty((80, 80, self.frame_seq_num))
             for i in range(self.frame_seq_num):
                 state = self.game.ale.getScreenRGB()
-                self.show_screen(state)
+                #self.show_screen(state)
                 state = self.process_snapshot(state)
                 state_seq[:, :, i] = state
             stage_reward = 0
 
-            #TODO find a better way to do this 
-            #Initiallize B screen buffer
-            #self.logger.info("Initiallize screen buffer for player B")
-            #legal_actionsB = self.game.ale.getLegalActionSetB()
+            # Player B initiallization flag
+            playerB_is_uninitiallized = True
 
-            #Initiallize the screen buffer
-            #TODO: here is a hint, the screen_buffer_init is screwing with the predict function
-            #sarsa_screen_buffer_init()
-
-            #B starts the episode
-            playerB_is_uninitiallized = True 
-            #actionB = 0
-
-            while True:  # loop game frames
+            #Episode loop, each turn on the loop is a "step" and it implies a new game frame
+            while True:
 
                 # Select action player A
                 self.logger.info("Selecting player A action")
                 best_act = self.net.predict([state_seq])[0]
-                
+
                 # Prevent player A to take actions on the first two frames to add fairness
                 if step < 2:
                     actionA = 0
                 else:
+                    # Normal epsilon-greedy policy
                     if random.random() <= epsilon or len(np.unique(best_act)) == 1:  # random select
                         actionA = random.randint(0, self.actions - 1)
                     else:
@@ -264,7 +247,7 @@ class DQNLearning(object):
                     else:
                         actionB = self.sarsa_agent.step(-reward_n, playerB_observation)
                         actionB += 18 #TODO again fix this, it is anoying!!
-                else: 
+                else:
                     actionB = 18 #TODO fix this we must use just one value
 
                 self.logger.info("Action selected for player B actionB=%d" % (actionB))
@@ -272,28 +255,29 @@ class DQNLearning(object):
                 # Carry out selected actions
                 reward_n = self.game.ale.actAB(actionA, actionB)
 
-                # get observation for player A
+                # Getting screen image
                 state_n = self.game.ale.getScreenRGB()
                 state_n_grayscale = self.process_snapshot(state_n)
+
+                # Get observation for player A
                 state_n = np.reshape(state_n_grayscale, (80, 80, 1))
                 state_seq_n = np.append(state_n, state_seq[:, :, : (self.frame_seq_num - 1)], axis=2)
                 self.logger.info("Player A observation over")
 
-                # get observation for player B
+                # Get observation for player B
                 screen_buffer_index = self.buffer_count % self.buffer_length
-                self.screen_buffer[screen_buffer_index, ...] = state_n_grayscale 
-                #wait until the buffer is full
+                self.screen_buffer[screen_buffer_index, ...] = state_n_grayscale
+                # Wait until the buffer is full
                 if self.buffer_count >= self.buffer_length:
-                    playerB_observation = self.sarsa_get_observation(args) 
-
-                #overflow reset
+                    playerB_observation = self.sarsa_get_observation(args)
+                # Overflow reset
                 if self.buffer_count == (10*self.buffer_length):
                     self.buffer_count = self.buffer_length + 1
                 else:
                     self.buffer_count += 1
                 self.logger.info("Player B observation over")
 
-                #check game over state
+                # Check game over state
                 terminal_n = self.game.ale.game_over()
 
                 #TODO add frame limit
@@ -302,7 +286,7 @@ class DQNLearning(object):
                 if step > self.observe and epsilon > self.final_epsilon:
                     epsilon -= (self.init_epsilon - self.final_epsilon) / self.explore
 
-                # store experience
+                # Store experience
                 act_onehot = np.zeros(self.actions)
                 act_onehot[actionA] = 1
                 self.deque.append((state_seq, act_onehot, reward_n, state_seq_n, terminal_n))
@@ -350,25 +334,29 @@ class DQNLearning(object):
                 else:
                     state_desc = "train"
 
-                # record reward
+                # Record reward
                 print "game running, step=%d, action A=%s, action B=%s reward=%d, max_Q=%.6f, min_Q=%.6f" % \
                           (step, actionA, actionB, reward_n, np.max(best_act), np.min(best_act))
+
+                # Record max episode reward
                 if reward_n > stage_reward:
                     stage_reward = reward_n
-                #END 
+
+                # Check to end the episode
                 if terminal_n:
                     self.sarsa_agent.end_episode(-reward_n)
                     break
 
-            # record reward
+                #END episode loop
+
+            # Record max reward
             if stage_reward > max_reward:
                 max_reward = stage_reward
-            
+
             # log end of session
             self.logger.info(
                 "epoch=%d, state=%s, step=%d(%d), max_reward=%d, epsilon=%.5f, reward=%d, max_Q=%.6f" %
                 (epoch, state_desc, step, global_step, max_reward, epsilon, stage_reward, np.max(best_act)))
-
 
             # break the loop after max_game_iterations
             if epoch >= max_game_iterations:
@@ -389,11 +377,11 @@ class DQNLearning(object):
             # init state
             self.game.reset_game()
             # two players mode switch
-            self.game.set_mode(1) 
+            self.game.set_mode(1)
             state_seq = np.empty((80, 80, self.frame_seq_num))
             for i in range(self.frame_seq_num):
                 state = self.game.get_screen_rgb()
-                self.show_screen(state)
+                #self.show_screen(state)
                 state = self.process_snapshot(state)
                 state_seq[:, :, i] = state
             stage_step = 0
@@ -401,20 +389,20 @@ class DQNLearning(object):
 
             while True:
 
-                # select action
+                # Get action player A
                 best_act = self.net.predict([state_seq])[0]
                 if random.random() < epsilon or len(np.unique(best_act)) == 1:
                     action = random.randint(0, self.actions - 1)
                 else:
                     action = np.argmax(best_act)
 
-                # get action for player B
+                # Get action player B
                 actionB = 19 #TODO
 
                 # carry out selected action
                 reward_n = self.game.actAB(action, actionB)
                 state_n = self.game.get_screen_rgb()
-                self.show_screen(state_n)
+                #self.show_screen(state_n)
                 state_n = self.process_snapshot(state_n)
                 state_n = np.reshape(state_n, (80, 80, 1))
                 state_seq_n = np.append(state_n, state_seq[:, :, : (self.frame_seq_num - 1)], axis=2)
@@ -443,4 +431,3 @@ class DQNLearning(object):
             # break the loop after max_game_iterations
             if epoch >= max_game_iterations:
                 break
-
