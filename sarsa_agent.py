@@ -15,11 +15,11 @@ sys.setrecursionlimit(10000)
 
 class SARSALambdaAgent(object):
 
-    def __init__(self, sarsa_network, epsilon_start, epsilon_min,
-                 epsilon_decay, exp_pref, rng):
+    def __init__(self, sarsa_network, args, epsilon_min,
+                 epsilon_decay, exp_pref, logger, rng):
 
         self.network = sarsa_network
-        self.epsilon_start = epsilon_start
+        self.epsilon_start = args.epsilon_start
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
         self.exp_pref = exp_pref
@@ -28,18 +28,24 @@ class SARSALambdaAgent(object):
         self.image_height = self.network.input_height
         self.image_width = self.network.input_width
         self.data_set = ale_data_set.DataSet(self.image_height, self.image_width, self.phi_length, rng)
+        self._game_name = args.game
+
+        # Create folder to save the network
+        self.model_dir = "./%s/%s_sarsa" % (args.saved_model_dir, args.game)
+        if not os.path.isdir(self.model_dir):
+            os.makedirs(self.model_dir)
 
         # CREATE A FOLDER TO HOLD RESULTS
-        time_str = time.strftime("_%m-%d-%H-%M_", time.gmtime())
-        self.exp_dir = self.exp_pref + time_str + \
-                       "{}".format(self.network.lr).replace(".", "p") + "_" \
-                       + "{}".format(self.network.discount).replace(".", "p")
-
-        try:
-            os.stat(self.exp_dir)
-        except OSError:
-            os.makedirs(self.exp_dir)
-
+#        time_str = time.strftime("_%m-%d-%H-%M_", time.gmtime())
+#        self.exp_dir = self.exp_pref + time_str + \
+#                       "{}".format(self.network.lr).replace(".", "p") + "_" \
+#                       + "{}".format(self.network.discount).replace(".", "p")
+#
+#        try:
+#            os.stat(self.exp_dir)
+#        except OSError:
+#            os.makedirs(self.exp_dir)
+#
         self.num_actions = self.network.num_actions
 
         self.epsilon = self.epsilon_start
@@ -139,10 +145,11 @@ class SARSALambdaAgent(object):
         #logging.info("average loss: {:.4f}".format(np.mean(self.loss_averages)))
 
     def finish_epoch(self, epoch):
-        net_file = open(self.exp_dir + '/network_file_' + str(epoch) + '.pkl', 'w')
+        net_file = open(self.model_dir + '/' + self._game_name + '_' + str(epoch) + '.pkl', 'w')
         cPickle.dump(self.network, net_file, -1)
         net_file.close()
 
+#    This will be done by the logger
 #    def _open_results_file(self):
 #        logging.info("OPENING " + self.exp_dir + '/results.csv')
 #        self.results_file = open(self.exp_dir + '/results.csv', 'w', 0)

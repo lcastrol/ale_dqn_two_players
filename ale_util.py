@@ -10,16 +10,16 @@ import time
 class Logger(object):
 
     def __init__(self, log_dir, game_name, debug=False):
-        self._log_dir = log_dir
+        self.log_dir = log_dir
         self._game_name = game_name
-        if not os.path.exists(self._log_dir):
-            os.mkdir(self._log_dir)
+        if not os.path.exists(self.log_dir):
+            os.mkdir(self.log_dir)
         self._debug = debug
         self.DATE_FORMAT = "%Y-%m-%d"
         self.DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
         self._log_date = self._curdate()
-        self._logfile = "%s/%s_%s.log" % (self._log_dir, self._game_name, self._log_date)
-        self._expdatafile = "%s/%s_%s.csv" % (self._log_dir, self._game_name, int(time.time()))
+        self._logfile = "%s/%s_%s.log" % (self.log_dir, self._game_name, self._log_date)
+        self._expdatafile = "%s/%s_%s.csv" % (self.log_dir, self._game_name, int(time.time()))
         self._logger = open(self._logfile, 'a+')
         self._expdata = open(self._expdatafile, 'a+')
 
@@ -35,7 +35,7 @@ class Logger(object):
             self._logger.close()
             # make new log file
             self._log_date = self._curdate()
-            self._logfile = "%s/%s.log" % (self._log_dir, self._log_date)
+            self._logfile = "%s/%s.log" % (self.log_dir, self._log_date)
             self._logger = open(self._logfile, 'a+')
 
     def _writer(self, msg):

@@ -7,11 +7,10 @@ import tensorflow as tf
 
 class DLNetwork(object):
 
-    def __init__(self, game_name, action_num, logger, args):
+    def __init__(self, action_num, logger, args):
 
-        self.model_dir = args.saved_model_dir
-        if self.model_dir == "":
-            self.model_dir = "./saved_networks/%s" % game_name
+        self._game_name = args.game
+        self.model_dir = "./%s/%s_dqn" % (args.saved_model_dir, self._game_name)
         if not os.path.isdir(self.model_dir):
             os.makedirs(self.model_dir)
         self.actions = action_num

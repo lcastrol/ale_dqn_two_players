@@ -44,7 +44,7 @@ def parser_argument():
 
     parse.add_argument("--with_pool_layer", type=str2bool, default=False, help="whether has max_pool layer")
     parse.add_argument("--frame_seq_num", type=int, default=4, help="frame seq number")
-    parse.add_argument("--saved_model_dir", type=str, default="", help="")
+    parse.add_argument("--saved_model_dir", type=str, default="saved_networks", help="")
     parse.add_argument("--model_file", type=str, default="", help="")
     parse.add_argument("--save_model_freq", type=int, default=100000, help="")
 
@@ -91,7 +91,7 @@ def parser_argument():
         args.experiment_prefix = args.game
 
     #Generate the experiment wrapper
-    ale_testbench = ALEtestbench(args.game, args)
+    ale_testbench = ALEtestbench(args)
 
     #Trigger the experiment depending on the mode play|train
     if args.handle == "train":

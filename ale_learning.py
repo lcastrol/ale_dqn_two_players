@@ -19,16 +19,17 @@ from sarsa_agent import SARSALambdaAgent
 
 
 class ALEtestbench(object):
-    def __init__(self, game_name, args):
+    def __init__(self, args):
 
         # Save game name
-        self.game_name = game_name
+        self.game_name = args.game
 
         # Initialize logger
-        self.logger = Logger("./log", self.game_name)
+        self._log_dir = "./log_" + str(int(time.time()))
+        self.logger = Logger(self._log_dir, self.game_name)
 
         # Initiallize ALE
-        self.game = AleInterface(game_name, args)
+        self.game = AleInterface(self.game_name, args)
 
         self.actions = self.game.get_actions_num()
         self.actionsB = self.game.get_actions_numB()
@@ -55,14 +56,16 @@ class ALEtestbench(object):
         self.screen_buffer = np.empty((self.buffer_length, 80, 80),
                                       dtype=np.uint8)
 
-        if args.saved_model_dir == "":
-            self.param_file = "./saved_networks/%s.json" % game_name
-        else:
-            self.param_file = "%s/%s.json" % (args.saved_model_dir, game_name)
+        # Create folder for saved NN
+        if not os.path.isdir("./" + args.saved_model_dir):
+            os.makedirs("./" + args.saved_model_dir)
+
+        # Parameters file of DQN
+        self.param_file = "%s/%s.json" % (args.saved_model_dir, self.game_name)
 
         # Player A
         # DQN network
-        self.net = DLNetwork(game_name, self.actions, self.logger, args)
+        self.net = DLNetwork(self.actions, self.logger, args)
 
         # Player B
         # SARSA learner and network
@@ -107,10 +110,11 @@ class ALEtestbench(object):
 
         self.logger.info("Creating SARSA agent")
         sarsa_agent_inst = SARSALambdaAgent( sarsa_network,
-                                             args.epsilon_start,
+                                             args,
                                              args.epsilon_min,
                                              args.epsilon_decay,
                                              args.experiment_prefix,
+                                             self.logger,
                                              rng)
 
         return sarsa_agent_inst
