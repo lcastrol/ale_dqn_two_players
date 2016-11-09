@@ -51,8 +51,8 @@ def parser_argument():
     ## sarsa arguments
     parse.add_argument('--nn-file', dest="nn_file", type=str, default=None, help='Pickle file containing trained net.')
 
-    parse.add_argument("--screen_width", type=int, default=84, help="resize screen width")
-    parse.add_argument("--screen_height", type=int, default=84, help="resize screen height")
+    parse.add_argument("--screen-width", dest="screen_width", type=int, default=defaults.RESIZED_WIDTH, help="resize screen width")
+    parse.add_argument("--screen-height", dest="screen_height", type=int, default=defaults.RESIZED_HEIGHT, help="resize screen height")
 
     parse.add_argument('--phi-length', dest="phi_length", type=int, default=4, help=('Number of recent frames used to represent ' + 'state. (default: 4)'))
     parse.add_argument('--discount', type=float, default=.99, help='Discount rate (default: .99)')

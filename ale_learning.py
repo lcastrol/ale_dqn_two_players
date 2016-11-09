@@ -25,7 +25,8 @@ class ALEtestbench(object):
         self.game_name = args.game
 
         # Initialize logger
-        self._log_dir = "./log_" + str(int(time.time()))
+        self._exptime = str(int(time.time()))
+        self._log_dir = "./log_" + self._exptime
         self.logger = Logger(self._log_dir, self.game_name)
 
         # Initiallize ALE
@@ -57,6 +58,7 @@ class ALEtestbench(object):
                                       dtype=np.uint8)
 
         # Create folder for saved NN
+        args.saved_model_dir += "_" + self._exptime
         if not os.path.isdir("./" + args.saved_model_dir):
             os.makedirs("./" + args.saved_model_dir)
 
@@ -84,10 +86,8 @@ class ALEtestbench(object):
             # New network creation
             self.logger.info("Creating network for SARSA")
             sarsa_network = q_network.DeepQLearner(
-                                                   #args.screen_width,
-                                                   #args.screen_height,
-                                                   80, #TODO, fix this, hardcoding is terrible
-                                                   80, #TODO, fix this, hardcoding is terrible
+                                                   args.screen_width,
+                                                   args.screen_height,
                                                    self.actionsB,
                                                    args.phi_length, #num_frames
                                                    args.discount,
@@ -303,7 +303,7 @@ class ALEtestbench(object):
                         # train Q network
                         self.net.fit(batch_state_seq, batch_action, target_rewards)
 
-                # update state
+                # Update state sequence
                 state_seq = state_seq_n
 
                 # Increase step counter
@@ -316,7 +316,7 @@ class ALEtestbench(object):
                     self.net.save_model("%s-dqn" % self.game_name, global_step=global_step)
                     self.logger.info("save network model, global_step=%d, cur_step=%d" % (global_step, step))
 
-                # state description
+                # Player A state description
                 if step < self.observe:
                     state_desc = "observe"
                 elif epsilon > self.final_epsilon:
@@ -325,8 +325,9 @@ class ALEtestbench(object):
                     state_desc = "train"
 
                 # Record reward
-                print "game running, step=%d, action A=%s, action B=%s reward=%d, max_Q=%.6f, min_Q=%.6f" % \
-                          (step, actionA, actionB, reward_n, np.max(best_act), np.min(best_act))
+
+                #print "game running, step=%d, action A=%s, action B=%s reward=%d, max_Q=%.6f, min_Q=%.6f" % \
+                #          (step, actionA, actionB, reward_n, np.max(best_act), np.min(best_act))
 
                 self.logger.exp([step, actionA, actionB, reward_n, np.max(best_act), np.min(best_act)])
 

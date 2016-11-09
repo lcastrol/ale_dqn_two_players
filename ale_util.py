@@ -69,10 +69,10 @@ class Logger(object):
         msg = ""
         if len(data_line) > 1:
             for sample in range(0,(len(data_line) - 1)):
-                msg += "%s," % (sample)
-            msg += "%s" % (data_line[0])
+                msg += "%s," % (str(data_line[sample]))
+            msg += "%s" % (str(data_line[-1]))
         elif len(data_line) == 1:
-            msg = "%s" % (data_line[0])
+            msg = "%s" % (str(data_line[0]))
         self._expdata.write("%s\n" % msg)
 
 #logger = Logger(log_dir="./log")
