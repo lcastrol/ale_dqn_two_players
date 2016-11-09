@@ -20,9 +20,14 @@ class defaults:
     FRAME_SKIP = 4
     REPEAT_ACTION_PROBABILITY = 0
 
-    # ----------------------
-    # Agent/Network parameters:
-    # ----------------------
+    # -------------------------------
+    # DQN agent parameters:
+    # -------------------------------
+    SAVE_MODEL_FREQ = 100000 
+
+    # -------------------------------
+    # SARSA Agent/Network parameters:
+    # -------------------------------
     UPDATE_RULE = 'deepmind_rmsprop'
     BATCH_ACCUMULATOR = 'sum'
     LEARNING_RATE = .00025

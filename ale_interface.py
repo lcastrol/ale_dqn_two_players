@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #  -*- coding: utf-8 -*-
-# author:  <yao62995@gmail.com> 
+# author:  <yao62995@gmail.com>
 
 import os
 import sys
@@ -26,7 +26,6 @@ class AleInterface(object):
         #
 
         self.ale.setBool('display_screen', args.display_screen)
-
         self.ale.setInt('frame_skip', args.frame_skip)
         self.ale.setFloat('repeat_action_probability', args.repeat_action_probability)
         self.ale.setBool('color_averaging', args.color_averaging)
@@ -73,4 +72,3 @@ class AleInterface(object):
 
     def set_mode(self, mode):
         return self.ale.setMode(mode)
-

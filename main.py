@@ -1,6 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 #  -*- coding: utf-8 -*-
 # author:  <yao62995@gmail.com>
+# modifications by Luis Castro and Jens Rowekamp
 
 from defaults import defaults
 
@@ -12,9 +13,13 @@ def str2bool(v):
 
 def parser_argument():
     parse = argparse.ArgumentParser()
-    parse.add_argument("--game", type=str, help="game name")
+
+    #Mandatory arguments
+    parse.add_argument("game", type=str, help="game name")
+
+    #Optional arguments
     parse.add_argument("--handle", type=str, help="\"train\" or \"play\"")
-    parse.add_argument("--iterations", type=int, default=10000, help="number of game iterations to play / train")
+    parse.add_argument("--iterations", type=int, default=defaults.EPOCHS, help="number of game iterations to play / train")
 
     # env_args = parse.add_argument_group("ALE_Interface")
     parse.add_argument("--display_screen", type=str2bool, default=True, help="whether to display screen")
@@ -46,7 +51,8 @@ def parser_argument():
     parse.add_argument("--frame_seq_num", type=int, default=4, help="frame seq number")
     parse.add_argument("--saved_model_dir", type=str, default="saved_networks", help="")
     parse.add_argument("--model_file", type=str, default="", help="")
-    parse.add_argument("--save_model_freq", type=int, default=100000, help="")
+    parse.add_argument("--save_model_freq", type=int, default=defaults.SAVE_MODEL_FREQ, help="")
+    parse.add_argument("--save-model-at-termination", dest="save_model_at_termination", action='store_true', default=False, help="False|True, save the DQN model at the termination of the episode")
 
     ## sarsa arguments
     parse.add_argument('--nn-file', dest="nn_file", type=str, default=None, help='Pickle file containing trained net.')
@@ -76,10 +82,6 @@ def parser_argument():
 
     #Parse the arguments
     args = parse.parse_args()
-
-    #TODO this can be done with the "required" flag within the parsing of the argument
-    if args.game is None or args.handle is None:
-        parse.print_help()
 
     #TODO Fix this, this should trigger a warning at least
     if args.handle != "train":  # use cpu when play games
