@@ -23,7 +23,9 @@ class defaults:
     # -------------------------------
     # DQN agent parameters:
     # -------------------------------
-    SAVE_MODEL_FREQ = 100000 
+    SAVE_MODEL_FREQ = 100000
+    #DQN_OBSERVE_LIMIT = 10000 #Original value
+    DQN_OBSERVE_LIMIT = 300 
 
     # -------------------------------
     # SARSA Agent/Network parameters:
@@ -48,7 +50,7 @@ class defaults:
     UPDATE_FREQUENCY = 4
     REPLAY_MEMORY_SIZE = 1000000
     BATCH_SIZE = 32
-    #NETWORK_TYPE = "nature_cuda" #TODO no gpu support :P
+    #NETWORK_TYPE = "nature_cuda" #Original value, no gpu support for us:P
     NETWORK_TYPE = "linear"
     FREEZE_INTERVAL = 10000
     REPLAY_START_SIZE = 50000

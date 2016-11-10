@@ -22,14 +22,14 @@ def parser_argument():
     parse.add_argument("--iterations", type=int, default=defaults.EPOCHS, help="number of game iterations to play / train")
 
     # env_args = parse.add_argument_group("ALE_Interface")
-    parse.add_argument("--no-screen-display", dest="display_screen", action='store_false', default=True, help="whether to display screen")
+    parse.add_argument("--no-screen-display", dest="display_screen", action='store_false', default=True, help="Turn off screen display")
     parse.add_argument("--frame_skip", type=int, default=4, help="frame skip number")
     parse.add_argument("--repeat_action_probability", type=float, default=0, help="repeat action probability")
     parse.add_argument("--color_averaging", type=str2bool, default=True, help="color average")
     parse.add_argument("--random_seed", type=int, default=0, help="random seed")
 
     # learn_args = parse.add_argument_group("ALE_Learning")
-    parse.add_argument("--observe", type=int, default=10000, help="number of random start")
+    parse.add_argument("--observe", type=int, default=defaults.DQN_OBSERVE_LIMIT, help="number of random start")
     parse.add_argument("--explore", type=float, default=2000000.0, help="")
     parse.add_argument("--replay_memory", type=int, default=50000, help="")
     parse.add_argument("--gamma", type=float, default=0.99, help="")

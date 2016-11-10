@@ -340,7 +340,7 @@ class ALEtestbench(object):
                 #          (step, actionA, actionB, reward_n, np.max(best_act), np.min(best_act))
 
                 # Record step information
-                self.logger.exp([epoch, step, actionA, actionB, reward_n, game_dif_score, playerA_score, playerB_score])
+                self.logger.exp([epoch, step, actionA, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon])
 
                 # Record max episode reward
                 if reward_n > stage_reward:
