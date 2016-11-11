@@ -188,8 +188,7 @@ class ALEtestbench(object):
         while True:
 
             # Initiallize variables
-            epoch += 1
-            step = 0
+            #step = 0
             game_dif_score = 0
             playerA_score = 0
             playerB_score = 0
@@ -223,10 +222,10 @@ class ALEtestbench(object):
                     actionA = 0
                 else:
                     # Normal epsilon-greedy policy
-                    if random.random() <= epsilon or len(np.unique(best_act)) == 1:  # random select
-                        actionA = random.randint(0, self.actions - 1)
+                    if (random.random() <= epsilon) or (len(np.unique(best_act)) == 1):
+                        actionA = random.randint(0, self.actions - 1) # random action selection
                     else:
-                        actionA = np.argmax(best_act)
+                        actionA = np.argmax(best_act) # Best action selection
 
                 self.logger.info("Action selected for player A actionA=%d" % (actionA))
 
@@ -271,7 +270,7 @@ class ALEtestbench(object):
                 # Wait until the buffer is full
                 if self.buffer_count >= self.buffer_length:
                     playerB_observation = self.sarsa_get_observation(args)
-                # Overflow reset
+                # Reset buffer counter to avoid overflow
                 if self.buffer_count == (10*self.buffer_length):
                     self.buffer_count = self.buffer_length + 1
                 else:
@@ -283,8 +282,8 @@ class ALEtestbench(object):
 
                 #TODO add frame limit
 
-                # scale down epsilon
-                if step > self.observe and epsilon > self.final_epsilon:
+                # Scale down epsilon
+                if (step > self.observe) and (epsilon > self.final_epsilon):
                     epsilon -= (self.init_epsilon - self.final_epsilon) / self.explore
 
                 # Store experience
@@ -294,8 +293,8 @@ class ALEtestbench(object):
                 if len(self.deque) > self.replay_memory:
                     self.deque.popleft()
 
-                # minibatch train
-                if step > self.observe and step % self.update_frequency == 0:
+                # DQN Minibatch train
+                if ((step > self.observe) and ((step % self.update_frequency) == 0)):
                     for _ in xrange(self.action_repeat):
                         mini_batch = random.sample(self.deque, self.batch_size)
                         batch_state_seq = [item[0] for item in mini_batch]
@@ -336,9 +335,6 @@ class ALEtestbench(object):
                 else:
                     state_desc = "train"
 
-                #print "game running, step=%d, action A=%s, action B=%s reward=%d, max_Q=%.6f, min_Q=%.6f" % \
-                #          (step, actionA, actionB, reward_n, np.max(best_act), np.min(best_act))
-
                 # Record step information
                 self.logger.exp([epoch, step, actionA, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon])
 
@@ -357,8 +353,7 @@ class ALEtestbench(object):
                         self.net.save_model("%s-dqn" % self.game_name, global_step=global_step)
                         self.logger.info("Saving network model, global_step=%d, cur_step=%d" % (global_step, step))
                     break
-
-                #END episode loop
+                #****************** END episode loop ****************************************
 
             # Record max reward
             if stage_reward > max_reward:
@@ -367,16 +362,21 @@ class ALEtestbench(object):
             # Record epoch information
             #self.logger.exp([epoch, max_reward, epsilon])
 
-            # Log end of session
+            # Log end of epoch
             self.logger.info(
                 "epoch=%d, state=%s, step=%d(%d), max_reward=%d, epsilon=%.5f, reward=%d, max_Q=%.6f" %
                 (epoch, state_desc, step, global_step, max_reward, epsilon, stage_reward, np.max(best_act)))
+
+            # Increase epoch counter
+            epoch += 1
 
             # Break the loop after max_game_iterations
             if epoch >= max_game_iterations:
                 self.sarsa_agent.finish_epoch(epoch)
                 break
+            #****************** END epoch loop ****************************************
 
+    """ Play function, this is the main loop for using pretrained networks """
     def play_game(self, epsilon):
 
         # play games
@@ -414,9 +414,12 @@ class ALEtestbench(object):
 
                 # carry out selected action
                 reward_n = self.game.actAB(action, actionB)
+
+                # Get observation
                 state_n = self.game.get_screen_rgb()
                 state_n = self.process_snapshot(state_n)
                 state_n = np.reshape(state_n, (80, 80, 1))
+
                 state_seq_n = np.append(state_n, state_seq[:, :, : (self.frame_seq_num - 1)], axis=2)
                 terminal_n = self.game.game_over()
 

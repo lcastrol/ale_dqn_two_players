@@ -25,7 +25,10 @@ class defaults:
     # -------------------------------
     SAVE_MODEL_FREQ = 100000
     #DQN_OBSERVE_LIMIT = 10000 #Original value
-    DQN_OBSERVE_LIMIT = 300 
+    DQN_OBSERVE_LIMIT = 300
+    #DQN_EXPLORE_LIMIT = 2000000.0
+    DQN_EXPLORE_LIMIT = 27000.0  #This is a decay of 15 games (15 * 1800) each game of 1800 frames
+    UPDATE_FREQUENCY = 4
 
     # -------------------------------
     # SARSA Agent/Network parameters:
@@ -47,7 +50,6 @@ class defaults:
     EPSILON_MIN = .1
     EPSILON_DECAY = 1000000
     PHI_LENGTH = 4
-    UPDATE_FREQUENCY = 4
     REPLAY_MEMORY_SIZE = 1000000
     BATCH_SIZE = 32
     #NETWORK_TYPE = "nature_cuda" #Original value, no gpu support for us:P

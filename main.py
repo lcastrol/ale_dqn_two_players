@@ -14,31 +14,40 @@ def str2bool(v):
 def parser_argument():
     parse = argparse.ArgumentParser()
 
-    #Mandatory arguments
+    # ------------------------------------------------------------------------------------------
+    # Mandatory arguments
+    # ------------------------------------------------------------------------------------------
     parse.add_argument("game", type=str, help="game name")
 
-    #Optional arguments
+    # ------------------------------------------------------------------------------------------
+    # Experiment arguments
+    # ------------------------------------------------------------------------------------------
     parse.add_argument("--handle", type=str, help="\"train\" or \"play\"")
     parse.add_argument("--iterations", type=int, default=defaults.EPOCHS, help="number of game iterations to play / train")
 
-    # env_args = parse.add_argument_group("ALE_Interface")
+    # ------------------------------------------------------------------------------------------
+    # ALE arguments
+    # ------------------------------------------------------------------------------------------
     parse.add_argument("--no-screen-display", dest="display_screen", action='store_false', default=True, help="Turn off screen display")
     parse.add_argument("--frame_skip", type=int, default=4, help="frame skip number")
     parse.add_argument("--repeat_action_probability", type=float, default=0, help="repeat action probability")
     parse.add_argument("--color_averaging", type=str2bool, default=True, help="color average")
     parse.add_argument("--random_seed", type=int, default=0, help="random seed")
 
-    # learn_args = parse.add_argument_group("ALE_Learning")
-    parse.add_argument("--observe", type=int, default=defaults.DQN_OBSERVE_LIMIT, help="number of random start")
-    parse.add_argument("--explore", type=float, default=2000000.0, help="")
+    # ------------------------------------------------------------------------------------------
+    # DQN arguments
+    # ------------------------------------------------------------------------------------------
+    # DQN epsilon arguments
+    parse.add_argument("--observe", type=int, default=defaults.DQN_OBSERVE_LIMIT, help="Number of steps before start the DQN training stage")
+    parse.add_argument("--explore", type=float, default=defaults.DQN_EXPLORE_LIMIT, help="Number of steps before start the DQN explore stage")
+    parse.add_argument("--init_epsilon", type=float, default=1.0, help="Initial value for DQN epsilon")
+    parse.add_argument("--final_epsilon", type=float, default=0.1, help="Final value of DQN epsilon")
+
     parse.add_argument("--replay_memory", type=int, default=50000, help="")
     parse.add_argument("--gamma", type=float, default=0.99, help="")
-    parse.add_argument("--init_epsilon", type=float, default=1.0, help="")
-    parse.add_argument("--final_epsilon", type=float, default=0.1, help="")
-    parse.add_argument("--update_frequency", type=int, default=4, help="")
+    parse.add_argument("--update_frequency", type=int, default=defaults.UPDATE_FREQUENCY, help=" Frequency of the minibatch train for DQN in steps")
     parse.add_argument("--action_repeat", type=int, default=4, help="")
 
-    # net_args = parse.add_argument_group("ALE_Network")
     parse.add_argument("--device", type=str, default="gpu", help="cpu or gpu")
     parse.add_argument("--gpu", type=int, default=0, help="gpu average")
     parse.add_argument("--batch_size", type=int, default=32, help="batch size")
@@ -54,7 +63,9 @@ def parser_argument():
     parse.add_argument("--save_model_freq", type=int, default=defaults.SAVE_MODEL_FREQ, help="")
     parse.add_argument("--save-model-at-termination", dest="save_model_at_termination", action='store_true', default=False, help="False|True, save the DQN model at the termination of the episode")
 
-    ## sarsa arguments
+    # ------------------------------------------------------------------------------------------
+    # Sarsa arguments
+    # ------------------------------------------------------------------------------------------
     parse.add_argument('--nn-file', dest="nn_file", type=str, default=None, help='Pickle file containing trained net.')
 
     parse.add_argument("--screen-width", dest="screen_width", type=int, default=defaults.RESIZED_WIDTH, help="resize screen width")
