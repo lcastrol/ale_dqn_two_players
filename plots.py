@@ -30,10 +30,15 @@ def plot():
     episode_column = 0
 
     # Read values from csv file
+    prev_episode = '0'
+    prev_row = []
     for row in reader:
-        if row[1] == '1786': #TODO this is need of time, missing KO case
-            game_score_list.append(int(row[score_column]))
-            episode_number_list.append(int(row[episode_column]))
+        if prev_episode != row[0]:
+            game_score_list.append(int(prev_row[score_column]))
+            episode_number_list.append(int(prev_row[episode_column]))
+        prev_row = row
+        prev_episode = row[0]
+
 
     iFile.close()
 
@@ -41,12 +46,12 @@ def plot():
     game_score = np.array(game_score_list)
 
     if args.plot_histogram == True:
-        plot_histogram(game_score)
+        plot_histogram(game_score, destiny)
 
     plot_frame_skip(episode_number, game_score, destiny)
 
 
-def plot_histogram(data):
+def plot_histogram(data, destiny):
 
     fig, ax = plt.subplots()
 
@@ -76,7 +81,11 @@ def plot_histogram(data):
     ax.set_xlim(left[0], right[-1])
     ax.set_ylim(bottom.min(), top.max())
 
-    plt.show()
+    plt.title('Game score histogram')
+    plt.grid(True)
+    plt.savefig("%s/game_score_histogram.png" % destiny)
+    plt.close()
+    #plt.show()
 
 # plot average difference / frame skip opponent graphs with fixed frame skip of frame_skip
 def plot_frame_skip(x_list, y_list, destiny):

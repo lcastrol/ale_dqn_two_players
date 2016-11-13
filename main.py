@@ -33,6 +33,8 @@ def parser_argument():
     parse.add_argument("--repeat_action_probability", type=float, default=0, help="repeat action probability")
     parse.add_argument("--color_averaging", type=str2bool, default=True, help="color average")
     parse.add_argument("--random_seed", type=int, default=0, help="random seed")
+    parse.add_argument("--screen-width", dest="screen_width", type=int, default=defaults.RESIZED_WIDTH, help="resize screen width")
+    parse.add_argument("--screen-height", dest="screen_height", type=int, default=defaults.RESIZED_HEIGHT, help="resize screen height")
 
     # ------------------------------------------------------------------------------------------
     # DQN arguments
@@ -68,8 +70,6 @@ def parser_argument():
     # ------------------------------------------------------------------------------------------
     parse.add_argument('--nn-file', dest="nn_file", type=str, default=None, help='Pickle file containing trained net.')
 
-    parse.add_argument("--screen-width", dest="screen_width", type=int, default=defaults.RESIZED_WIDTH, help="resize screen width")
-    parse.add_argument("--screen-height", dest="screen_height", type=int, default=defaults.RESIZED_HEIGHT, help="resize screen height")
 
     parse.add_argument('--phi-length', dest="phi_length", type=int, default=4, help=('Number of recent frames used to represent ' + 'state. (default: 4)'))
     parse.add_argument('--discount', type=float, default=.99, help='Discount rate (default: .99)')
@@ -88,8 +88,8 @@ def parser_argument():
     parse.add_argument('--experiment-prefix', dest="experiment_prefix", default=None, help='Experiment name prefix ' '(default is the name of the game)')
     parse.add_argument('--resize-method', dest="resize_method", type=str, default=defaults.RESIZE_METHOD, help=('crop|scale (default: %(default)s)'))
 
-    # parameter for play
-    parse.add_argument("--play_epsilon", type=float, default=0.0, help="a float value in [0, 1), 0 means use global train epsilon")
+    # Parameter for play
+    parse.add_argument("--play_epsilon", type=float, default=0.0, help="A float value in [0, 1), 0 means use global train epsilon")
 
     #Parse the arguments
     args = parse.parse_args()
