@@ -10,6 +10,7 @@ import json
 import numpy as np
 import cv2
 import q_network
+import cPickle
 
 from ale_interface import AleInterface
 from collections import deque
@@ -85,6 +86,10 @@ class ALEtestbench(object):
         random_seed = random.randint(0,20)
         rng = np.random.RandomState(random_seed)
 
+        #Check the presence of NN file for sarsa when in play mode
+        if ((args.handle == 'play') and (args.nn_file is None)):
+            raise Exception('Error: no SARSA NN file to load')
+
         if args.nn_file is None:
             # New network creation
             self.logger.info("Creating network for SARSA")
@@ -108,6 +113,7 @@ class ALEtestbench(object):
                                                    rng)
         else:
             #Pretrained network loading
+            #Mandatory for play mode, optional for training
             network_file_handle = open(args.nn_file, 'r')
             sarsa_network = cPickle.load(network_file_handle)
 
@@ -411,6 +417,7 @@ class ALEtestbench(object):
             # Reset the game in ale
             self.game.ale.reset_game()
 
+
             # two players mode switch
             self.game.ale.setMode(1)
 
@@ -424,6 +431,9 @@ class ALEtestbench(object):
             # Init
             stage_step = 0
             stage_reward = 0
+
+            # Player B initiallization flag
+            playerB_is_uninitiallized = True
 
             # Episodes loop
             while True:
@@ -454,11 +464,27 @@ class ALEtestbench(object):
                 # Carry out selected action
                 reward_n = self.game.ale.actAB(action, actionB)
 
-                # Get observation player A
-                state_n = self.game.get_screen_rgb()
-                state_n = self.process_snapshot(state_n)
-                state_n = np.reshape(state_n, (80, 80, 1))
+                # Getting screen image
+                state_n = self.game.ale.getScreenRGB()
+                state_n_grayscale = self.process_snapshot(state_n)
+
+                # Get observation for player A
+                state_n = np.reshape(state_n_grayscale, (args.screen_width, args.screen_height, 1))
                 state_seq_n = np.append(state_n, state_seq[:, :, : (self.frame_seq_num - 1)], axis=2)
+                self.logger.info("Player A observation over")
+
+                # Get observation for player B
+                screen_buffer_index = self.buffer_count % self.buffer_length
+                self.screen_buffer[screen_buffer_index, ...] = state_n_grayscale
+                # Wait until the buffer is full
+                if self.buffer_count >= self.buffer_length:
+                    playerB_observation = self.sarsa_get_observation(args)
+                # Reset buffer counter to avoid overflow
+                if self.buffer_count == (10*self.buffer_length):
+                    self.buffer_count = self.buffer_length + 1
+                else:
+                    self.buffer_count += 1
+                self.logger.info("Player B observation over")
 
                 # Check game over state
                 terminal_n = self.game.game_over()
