@@ -110,7 +110,7 @@ def parser_argument():
     if args.handle == "train":
         ale_testbench.train_net(args)
     else:
-        ale_testbench.play_game(args.play_epsilon)
+        ale_testbench.play_game(args)
 
 if __name__ == "__main__":
     parser_argument()

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python main.py --game=boxing --device=cpu --handle=play --play_epsilon=1 --iterations=2
+./main.py --device=cpu --handle=play --play_epsilon=1 --iterations=2 boxing

@@ -60,7 +60,8 @@ class ALEtestbench(object):
                                       dtype=np.uint8)
 
         # Create folder for saved NN
-        args.saved_model_dir += "_" + self._exptime
+        if (args.saved_model_dir == 'saved_networks'):
+            args.saved_model_dir += "_" + self._exptime
         if not os.path.isdir("./" + args.saved_model_dir):
             os.makedirs("./" + args.saved_model_dir)
 
@@ -164,6 +165,7 @@ class ALEtestbench(object):
             jd = json.load(open(self.param_file, 'r'))
             return jd['epsilon'], jd["step"]
         else:
+            self.logger.info("Using epsilon: %d" % self.init_epsilon)
             return self.init_epsilon, 0
 
     def process_snapshot(self, snap_shot):
@@ -388,15 +390,18 @@ class ALEtestbench(object):
             #****************** END epoch loop ****************************************
 
     """ Play function, this is the main loop for using pretrained networks """
-    def play_game(self, epsilon):
+    def play_game(self, args):
 
         # Init vars
         max_reward = 0
         epoch = 0
+        epsilon = args.play_epsilon
 
         #Load epsilon value
         if epsilon == 0.0:
             epsilon, _ = self.param_unserierlize()
+        else:
+            self.logger.info("Using epsilong: %d" % epsilon)
 
         # Epochs loop
         while True:
@@ -447,7 +452,7 @@ class ALEtestbench(object):
                 self.logger.info("Action selected for player B actionB=%d" % (actionB))
 
                 # Carry out selected action
-                reward_n = self.game.actAB(action, actionB)
+                reward_n = self.game.ale.actAB(action, actionB)
 
                 # Get observation player A
                 state_n = self.game.get_screen_rgb()
