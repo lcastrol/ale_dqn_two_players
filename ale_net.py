@@ -34,6 +34,7 @@ class DLNetwork(object):
         self.saver = tf.train.Saver(max_to_keep=None)
         # register all variable
         self.session.run(tf.initialize_all_variables())
+
         # load model if exist
         model_file = None
         if args.model_file != "":
@@ -69,9 +70,9 @@ class DLNetwork(object):
 
     def restore_model(self, model_file=None):
         if model_file is not None:
-            model_file_path = "%s/%s" % (self.model_dir, model_file)
-            self.saver.restore(self.session, model_file_path)
-            self.logger.info("Successfully loaded: %s" % model_file_path)
+            #model_file_path = "%s/%s" % (self.model_dir, model_file)
+            self.saver.restore(self.session, model_file)
+            self.logger.info("Successfully loaded: %s" % model_file)
         else:
             checkpoint = tf.train.get_checkpoint_state(self.model_dir)
             if checkpoint and checkpoint.model_checkpoint_path:
