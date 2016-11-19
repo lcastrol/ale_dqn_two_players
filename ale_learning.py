@@ -402,6 +402,7 @@ class ALEtestbench(object):
         max_reward = 0
         epoch = 0
         epsilon = args.play_epsilon
+        
         max_game_iterations = self.iterations
 
         #Load epsilon value
