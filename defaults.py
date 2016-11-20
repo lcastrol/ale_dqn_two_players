@@ -16,7 +16,7 @@ class defaults:
     # ----------------------
     # ALE Parameters
     # ----------------------
-    FRAME_SKIP = 4
+    ALE_FRAME_SKIP = 1
     REPEAT_ACTION_PROBABILITY = 0
 
     # -------------------------------
@@ -26,8 +26,10 @@ class defaults:
     #DQN_OBSERVE_LIMIT = 10000 #Original value
     DQN_OBSERVE_LIMIT = 300
     #DQN_EXPLORE_LIMIT = 2000000.0
-    DQN_EXPLORE_LIMIT = 270000.0  #This is a decay of 15 games (15 * 1800) each game of 1800 frames
+    DQN_EXPLORE_LIMIT = 270000.0  #This is a decay of 15 games for boxing (15 * 1800) each game of 1800 frames
     UPDATE_FREQUENCY = 4
+    DQN_INITIAL_EPSILON = 1.0
+    DQN_FINAL_EPSILON = 0.1
 
     # -------------------------------
     # SARSA Agent/Network parameters:

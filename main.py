@@ -23,13 +23,13 @@ def parser_argument():
     # Experiment arguments
     # ------------------------------------------------------------------------------------------
     parse.add_argument("--handle", type=str, help="\"train\" or \"play\"")
-    parse.add_argument("--iterations", type=int, default=defaults.EPOCHS, help="number of game iterations to play / train")
+    parse.add_argument("--iterations", type=int, default=defaults.EPOCHS, help="number of game iterations to play or train")
 
     # ------------------------------------------------------------------------------------------
     # ALE arguments
     # ------------------------------------------------------------------------------------------
     parse.add_argument("--no-screen-display", dest="display_screen", action='store_false', default=True, help="Turn off screen display")
-    parse.add_argument("--frame_skip", type=int, default=4, help="frame skip number")
+    parse.add_argument("--frame_skip", type=int, default=defaults.ALE_FRAME_SKIP, help="Frame skip number")
     parse.add_argument("--repeat_action_probability", type=float, default=0, help="repeat action probability")
     parse.add_argument("--color_averaging", type=str2bool, default=True, help="color average")
     parse.add_argument("--random_seed", type=int, default=0, help="random seed")
@@ -42,15 +42,15 @@ def parser_argument():
     # DQN epsilon arguments
     parse.add_argument("--observe", type=int, default=defaults.DQN_OBSERVE_LIMIT, help="Number of steps before start the DQN training stage")
     parse.add_argument("--explore", type=float, default=defaults.DQN_EXPLORE_LIMIT, help="Number of steps before start the DQN explore stage")
-    parse.add_argument("--init_epsilon", type=float, default=1.0, help="Initial value for DQN epsilon")
-    parse.add_argument("--final_epsilon", type=float, default=0.1, help="Final value of DQN epsilon")
+    parse.add_argument("--init_epsilon", type=float, default=defaults.DQN_INITIAL_EPSILON, help="Initial value for DQN epsilon")
+    parse.add_argument("--final_epsilon", type=float, default=defaults.DQN_FINAL_EPSILON, help="Final value of DQN epsilon")
 
     parse.add_argument("--replay_memory", type=int, default=50000, help="")
     parse.add_argument("--gamma", type=float, default=0.99, help="")
     parse.add_argument("--update_frequency", type=int, default=defaults.UPDATE_FREQUENCY, help=" Frequency of the minibatch train for DQN in steps")
     parse.add_argument("--action_repeat", type=int, default=4, help="")
 
-    parse.add_argument("--device", type=str, default="gpu", help="cpu or gpu")
+    parse.add_argument("--device", type=str, default="cpu", help="cpu or gpu")
     parse.add_argument("--gpu", type=int, default=0, help="gpu average")
     parse.add_argument("--batch_size", type=int, default=32, help="batch size")
     parse.add_argument("--optimizer", choices=['rmsprop', 'adam', 'sgd'], default='rmsprop', help='Network optimization algorithm')
@@ -69,8 +69,6 @@ def parser_argument():
     # Sarsa arguments
     # ------------------------------------------------------------------------------------------
     parse.add_argument('--nn-file', dest="nn_file", type=str, default=None, help='Pickle file containing trained net.')
-
-
     parse.add_argument('--phi-length', dest="phi_length", type=int, default=4, help=('Number of recent frames used to represent ' + 'state. (default: 4)'))
     parse.add_argument('--discount', type=float, default=.99, help='Discount rate (default: .99)')
     parse.add_argument('--learning-rate', dest="learning_rate", type=float, default=.00025, help='Learning rate (default: .00025 )')
@@ -81,6 +79,7 @@ def parser_argument():
     parse.add_argument('--update-rule', dest="update_rule", type=str, default=defaults.UPDATE_RULE, help=('deepmind_rmsprop|rmsprop|sgd ' + '(default: %(default)s)'))
     parse.add_argument('--lambda', dest="lambda_decay", type=float, default=defaults.LAMBDA, help=('Lambda value. ' + '(default: %(default)s)'))
 
+    # Sarsa epsilon parameters
     parse.add_argument('--epsilon-start', dest="epsilon_start", type=float, default=defaults.EPSILON_START, help=('Starting value for epsilon. ' + '(default: %(default)s)'))
     parse.add_argument('--epsilon-min', dest="epsilon_min", type=float, default=defaults.EPSILON_MIN, help='Minimum epsilon. (default: %(default)s)')
     parse.add_argument('--epsilon-decay', dest="epsilon_decay", type=float, default=defaults.EPSILON_DECAY, help=('Number of steps to minimum epsilon. ' + '(default: %(default)s)'))
