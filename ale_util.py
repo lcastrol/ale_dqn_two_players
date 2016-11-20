@@ -9,7 +9,7 @@ import time
 
 class Logger(object):
 
-    def __init__(self, log_dir, game_name, debug=False):
+    def __init__(self, log_dir, game_name, debug=False, verbosity=0):
         self.log_dir = log_dir
         self._game_name = game_name
         if not os.path.exists(self.log_dir):
@@ -22,6 +22,7 @@ class Logger(object):
         self._expdatafile = "%s/%s_%s.csv" % (self.log_dir, self._game_name, int(time.time()))
         self._logger = open(self._logfile, 'a+')
         self._expdata = open(self._expdatafile, 'a+')
+        self._verbosity = verbosity
 
     def _curdate(self):
         return time.strftime(self.DATE_FORMAT, time.localtime())
@@ -50,7 +51,8 @@ class Logger(object):
 
     def info(self, msg):
         msg = "%s [INFO] %s" % (self._curdatetime(), msg)
-        print msg
+        if (self._verbosity > 0):
+            print msg
         self._writer(msg)
 
     def warn(self, msg):

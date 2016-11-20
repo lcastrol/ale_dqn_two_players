@@ -64,3 +64,8 @@ class defaults:
     MAX_START_NULLOPS = 30
     DETERMINISTIC = True
     CUDNN_DETERMINISTIC = False
+
+    # -------------------------------
+    # Logger
+    # -------------------------------
+    VERBOSITY = 0

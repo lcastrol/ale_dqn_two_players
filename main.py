@@ -87,8 +87,16 @@ def parser_argument():
     parse.add_argument('--experiment-prefix', dest="experiment_prefix", default=None, help='Experiment name prefix ' '(default is the name of the game)')
     parse.add_argument('--resize-method', dest="resize_method", type=str, default=defaults.RESIZE_METHOD, help=('crop|scale (default: %(default)s)'))
 
+    # ------------------------------------------------------------------------------------------
     # Parameter for play
+    # ------------------------------------------------------------------------------------------
     parse.add_argument("--play_epsilon", type=float, default=0.0, help="A float value in [0, 1), 0 means use global train epsilon")
+
+    # ------------------------------------------------------------------------------------------
+    # Logger arguments
+    # ------------------------------------------------------------------------------------------
+    parse.add_argument("--logger-verbosity", dest="verbosity", type=int, default=defaults.VERBOSITY, help="Verbosity level of the logger")
+
 
     #Parse the arguments
     args = parse.parse_args()

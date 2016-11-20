@@ -29,7 +29,7 @@ class ALEtestbench(object):
         # Initialize logger
         self._exptime = str(int(time.time()))
         self._log_dir = "./log_" + self._exptime
-        self.logger = Logger(self._log_dir, self.game_name)
+        self.logger = Logger(self._log_dir, self.game_name, verbosity=args.verbosity)
 
         # Initiallize ALE
         self.game = AleInterface(self.game_name, args)
