@@ -402,7 +402,7 @@ class ALEtestbench(object):
         max_reward = 0
         epoch = 0
         epsilon = args.play_epsilon
-        
+
         max_game_iterations = self.iterations
 
         #Load epsilon value
@@ -416,9 +416,14 @@ class ALEtestbench(object):
 
             self.logger.info("Episode start...")
 
+            # Initiallize variables
+            #step = 0
+            game_dif_score = 0
+            playerA_score = 0
+            playerB_score = 0
+
             # Reset the game in ale
             self.game.ale.reset_game()
-
 
             # two players mode switch
             self.game.ale.setMode(1)
@@ -466,6 +471,13 @@ class ALEtestbench(object):
                 # Carry out selected action
                 reward_n = self.game.ale.actAB(action, actionB)
 
+                #Save_scores
+                game_dif_score += reward_n
+                if (reward_n > 0):
+                    playerA_score += reward_n
+                elif (reward_n < 0):
+                    playerB_score += reward_n
+
                 # Getting screen image
                 state_n = self.game.ale.getScreenRGB()
                 state_n_grayscale = self.process_snapshot(state_n)
@@ -500,6 +512,9 @@ class ALEtestbench(object):
 
                 # Increase step counter
                 stage_step += 1
+
+                # Record step information
+                self.logger.exp([epoch, stage_step, action, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon])
 
                 # End he episode
                 if terminal_n:
