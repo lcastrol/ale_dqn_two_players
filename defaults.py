@@ -1,6 +1,7 @@
 #Experiment default values
 
 class defaults:
+
     # ----------------------
     # Added Parameters
     # ----------------------
@@ -15,8 +16,6 @@ class defaults:
     # ----------------------
     # ALE Parameters
     # ----------------------
-    BASE_ROM_PATH = "../roms/"
-    ROM = 'breakout.bin'
     FRAME_SKIP = 4
     REPEAT_ACTION_PROBABILITY = 0
 
