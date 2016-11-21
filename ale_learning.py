@@ -364,13 +364,21 @@ class ALEtestbench(object):
                 # End the episode
                 if terminal_n:
                     self.logger.info("Episode %d is over" % epoch)
-                    # Save network models
+
                     self.sarsa_agent.end_episode(-reward_n)
+
+                    # Save network models
                     if(self.save_model_at_termination == True):
                         global_step += step
                         self.param_serierlize(epsilon, global_step)
                         self.net.save_model("%s-dqn" % self.game_name, global_step=global_step)
                         self.logger.info("Saving network model, global_step=%d, cur_step=%d" % (global_step, step))
+
+                    #Save sarsa model
+                    net_file = open(self.model_dir + '/' + self._game_name + '_' + str(epoch) + '.pkl', 'w')
+                    cPickle.dump(self.network, net_file, -1)
+                    net_file.close()
+
                     break
                 #****************** END episode loop ****************************************
 
