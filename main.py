@@ -24,6 +24,7 @@ def parser_argument():
     # ------------------------------------------------------------------------------------------
     parse.add_argument("--handle", type=str, help="\"train\" or \"play\"")
     parse.add_argument("--iterations", type=int, default=defaults.EPOCHS, help="number of game iterations to play or train")
+    parse.add_argument("--log-dir-name", dest="log_dir", type=str, default=None, help="Name of the folder for the results")
 
     # ------------------------------------------------------------------------------------------
     # ALE arguments
@@ -60,7 +61,7 @@ def parser_argument():
 
     parse.add_argument("--with_pool_layer", type=str2bool, default=False, help="whether has max_pool layer")
     parse.add_argument("--frame_seq_num", type=int, default=4, help="frame seq number")
-    parse.add_argument("--saved_model_dir", type=str, default="saved_networks", help="")
+    parse.add_argument("--saved-model-dir", dest="saved_model_dir", type=str, default="saved_networks", help="")
     parse.add_argument("--model_file", type=str, default="", help="")
     parse.add_argument("--save_model_freq", type=int, default=defaults.SAVE_MODEL_FREQ, help="")
     parse.add_argument("--save-model-at-termination", dest="save_model_at_termination", action='store_true', default=False, help="False|True, save the DQN model at the termination of the episode")
