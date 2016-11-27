@@ -40,7 +40,7 @@ class Logger(object):
             self._logger = open(self._logfile, 'a+')
 
     def _writer(self, msg):
-        self._switch_log()
+        #self._switch_log()
         # maybe locker is needed here
         self._logger.write("%s\n" % msg)
 
@@ -76,5 +76,8 @@ class Logger(object):
         elif len(data_line) == 1:
             msg = "%s" % (str(data_line[0]))
         self._expdata.write("%s\n" % msg)
+
+    def close_log(self):
+        self._logger.close()
 
 #logger = Logger(log_dir="./log")
