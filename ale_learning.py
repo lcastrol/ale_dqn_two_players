@@ -86,7 +86,7 @@ class ALEtestbench(object):
     #SARSA agent init
     def sarsa_init(self, args):
 
-        random_seed = random.randint(0,20)
+        random_seed = random.randint(0,20) #0-19
         rng = np.random.RandomState(random_seed)
 
         #Check the presence of NN file for sarsa when in play mode
@@ -194,13 +194,13 @@ class ALEtestbench(object):
         self.logger.info("Final Epsilon: %.6f" % (args.final_epsilon))
         self.logger.info("Training starting...")
 
-        self.logger.info("Player A (SARSA agent), settings:")
+        self.logger.info("Player B (SARSA agent), settings:")
 
         # Initiallize variables
         max_reward = 0
-        epsilon, global_step = self.param_unserierlize()
         step = 0
         epoch = 0
+		epsilon, global_step = self.param_unserierlize() #Overwrite epsilon?
         max_game_iterations = self.iterations
 
         # Epochs loop
@@ -273,7 +273,7 @@ class ALEtestbench(object):
                 if (reward_n > 0):
                     playerA_score += reward_n
                 elif (reward_n < 0):
-                    playerB_score += reward_n
+                    playerB_score += reward_n #TODO shouldn't it be -reward_n to get a positive value?
 
                 # Getting screen image
                 state_n = self.game.ale.getScreenRGB()
@@ -412,7 +412,7 @@ class ALEtestbench(object):
         # Init vars
         max_reward = 0
         epoch = 0
-        epsilon = args.play_epsilon
+        epsilon = args.play_epsilon #default 1
 
         max_game_iterations = self.iterations
 
@@ -458,7 +458,7 @@ class ALEtestbench(object):
 
                 # Get action player A
                 best_act = self.net.predict([state_seq])[0]
-                if random.random() < epsilon or len(np.unique(best_act)) == 1:
+                if len(np.unique(best_act)) == 1: # shouldn't use epsilon here epsilon only for training
                     action = random.randint(0, self.actions - 1)
                 else:
                     action = np.argmax(best_act)
@@ -487,7 +487,7 @@ class ALEtestbench(object):
                 if (reward_n > 0):
                     playerA_score += reward_n
                 elif (reward_n < 0):
-                    playerB_score += reward_n
+                    playerB_score += reward_n #TODO shouldn't it be -reward_n to get a positive value?
 
                 # Getting screen image
                 state_n = self.game.ale.getScreenRGB()
