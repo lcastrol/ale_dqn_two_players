@@ -379,7 +379,7 @@ class ALEtestbench(object):
 
                     #Save sarsa model
                     net_file = open(args.saved_model_dir + '/' + self.game_name + '_' + str(epoch) + '.pkl', 'w')
-                    cPickle.dump(self.network, net_file, -1)
+                    cPickle.dump(self.sarsa_agent.network, net_file, -1)
                     net_file.close()
 
                     break
