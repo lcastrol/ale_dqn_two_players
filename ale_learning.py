@@ -378,7 +378,7 @@ class ALEtestbench(object):
                         self.logger.info("Saving network model, global_step=%d, cur_step=%d" % (global_step, step))
 
                     #Save sarsa model
-                    net_file = open(args.saved_model_dir + '/' + self._game_name + '_' + str(epoch) + '.pkl', 'w')
+                    net_file = open(args.saved_model_dir + '/' + self.game_name + '_' + str(epoch) + '.pkl', 'w')
                     cPickle.dump(self.network, net_file, -1)
                     net_file.close()
 
