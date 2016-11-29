@@ -200,7 +200,7 @@ class ALEtestbench(object):
         max_reward = 0
         step = 0
         epoch = 0
-		epsilon, global_step = self.param_unserierlize() #Overwrite epsilon?
+	epsilon, global_step = self.param_unserierlize() #Overwrite epsilon?
         max_game_iterations = self.iterations
 
         # Epochs loop
