@@ -10,7 +10,7 @@ class defaults:
     # Experiment Parameters
     # ----------------------
     STEPS_PER_EPOCH = 250000
-    EPOCHS = 200
+    EPOCHS = 60
     STEPS_PER_TEST = 125000
 
     # ----------------------
@@ -51,7 +51,8 @@ class defaults:
     EPSILON_MIN = .1
     EPSILON_DECAY = 1000000
     PHI_LENGTH = 4
-    REPLAY_MEMORY_SIZE = 1000000
+    #REPLAY_MEMORY_SIZE = 1000000
+    REPLAY_MEMORY_SIZE = 10000
     BATCH_SIZE = 32
     #NETWORK_TYPE = "nature_cuda" #Original value, no gpu support for us:P
     NETWORK_TYPE = "linear"
