@@ -445,15 +445,12 @@ class ALEtestbench(object):
                 best_act = self.net.predict([state_seq])[0]
                 
                 # Prevent player A to take actions on the first two frames to add fairness
-                if step < 2:
-                    actionA = 0
+                if len(np.unique(best_act)) == 1:
+                    actionA = random.randint(0, self.actions - 1)
+                    self.logger.info("Random action selected for player A actionA=%d" % (actionA))
                 else:
-                    if len(np.unique(best_act)) == 1:
-                        actionA = random.randint(0, self.actions - 1)
-                        self.logger.info("Random action selected for player A actionA=%d" % (actionA))
-                    else:
-                        actionA = np.argmax(best_act)
-                        self.logger.info("Action selected for player A actionA=%d" % (actionA))
+                    actionA = np.argmax(best_act)
+                    self.logger.info("Action selected for player A actionA=%d" % (actionA))
 
                 # Get action player B
                 self.logger.info("Selecting player B action")
@@ -488,7 +485,7 @@ class ALEtestbench(object):
 
                 # Get observation for player A
                 #state_n = np.reshape(state_n_grayscale, (args.screen_width, args.screen_height, 1))
-				state_n = np.reshape(state_n_grayscale, (80, 80, 1))
+                state_n = np.reshape(state_n_grayscale, (80, 80, 1))
                 state_seq_n = np.append(state_n, state_seq[:, :, : (self.frame_seq_num - 1)], axis=2)
                 self.logger.info("Player A observation over")
 
@@ -515,7 +512,7 @@ class ALEtestbench(object):
                 stage_step += 1
 
                 # Record step information
-                self.logger.exp([epoch, stage_step, action, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon])
+                self.logger.exp([epoch, stage_step, actionA, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon])
 
                 # End the episode
                 if terminal_n:
