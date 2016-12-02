@@ -194,23 +194,21 @@ class ALEtestbench(object):
         self.logger.info("Final Epsilon: %.6f" % (args.final_epsilon))
         self.logger.info("Training starting...")
 
-        self.logger.info("Player B (SARSA agent), settings:")
+        #self.logger.info("Player B (SARSA agent), settings:")
 
         # Initiallize variables
-        max_reward = 0
-        step = 0
         epoch = 0
-	epsilon, global_step = self.param_unserierlize() #Overwrite epsilon?
+        epsilon, global_step = self.param_unserierlize()
         max_game_iterations = self.iterations
 
         # Epochs loop
         while True:
 
             # Initiallize variables
-            #step = 0
             game_dif_score = 0
             playerA_score = 0
             playerB_score = 0
+            step = 0
 
             # initial state
             self.game.ale.reset_game()
@@ -224,7 +222,6 @@ class ALEtestbench(object):
                 state = self.game.ale.getScreenRGB()
                 state = self.process_snapshot(state)
                 state_seq[:, :, i] = state
-            stage_reward = 0
 
             # Player B initiallization flag
             playerB_is_uninitiallized = True
@@ -243,10 +240,10 @@ class ALEtestbench(object):
                     # Normal epsilon-greedy policy
                     if (random.random() <= epsilon) or (len(np.unique(best_act)) == 1):
                         actionA = random.randint(0, self.actions - 1) # random action selection
+                        self.logger.info("Random action selected for player A actionA=%d" % (actionA))
                     else:
                         actionA = np.argmax(best_act) # Best action selection
-
-                self.logger.info("Action selected for player A actionA=%d" % (actionA))
+                        self.logger.info("Action selected for player A actionA=%d" % (actionA))
 
                 # Select action player B
                 self.logger.info("Selecting player B action")
@@ -273,7 +270,7 @@ class ALEtestbench(object):
                 if (reward_n > 0):
                     playerA_score += reward_n
                 elif (reward_n < 0):
-                    playerB_score += reward_n #TODO shouldn't it be -reward_n to get a positive value?
+                    playerB_score += -reward_n
 
                 # Getting screen image
                 state_n = self.game.ale.getScreenRGB()
@@ -315,6 +312,7 @@ class ALEtestbench(object):
 
                 # DQN Minibatch train
                 if ((step > self.observe) and ((step % self.update_frequency) == 0)):
+                    self.logger.info("Player A training")
                     for _ in xrange(self.action_repeat):
                         mini_batch = random.sample(self.deque, self.batch_size)
                         batch_state_seq = [item[0] for item in mini_batch]
@@ -360,22 +358,17 @@ class ALEtestbench(object):
                 # Record step information
                 self.logger.exp([epoch, step, actionA, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon])
 
-                # Record max episode reward
-                if reward_n > stage_reward:
-                    stage_reward = reward_n
-
                 # End the episode
                 if terminal_n:
                     self.logger.info("Episode %d is over" % epoch)
 
                     self.sarsa_agent.end_episode(-reward_n)
 
-                    # Save network models
-                    if(self.save_model_at_termination == True):
-                        global_step += step
-                        self.param_serierlize(epsilon, global_step)
-                        self.net.save_model("%s-dqn" % self.game_name, global_step=global_step)
-                        self.logger.info("Saving network model, global_step=%d, cur_step=%d" % (global_step, step))
+                    # Save DQN network model
+                    global_step += step
+                    self.param_serierlize(epsilon, global_step)
+                    self.net.save_model("%s-dqn" % self.game_name, global_step=global_step)
+                    self.logger.info("Saving network model, global_step=%d, cur_step=%d" % (global_step, step))
 
                     #Save sarsa model
                     net_file = open(args.saved_model_dir + '/' + self.game_name + '_' + str(epoch) + '.pkl', 'w')
@@ -385,17 +378,10 @@ class ALEtestbench(object):
                     break
                 #****************** END episode loop ****************************************
 
-            # Record max reward
-            if stage_reward > max_reward:
-                max_reward = stage_reward
-
-            # Record epoch information
-            #self.logger.exp([epoch, max_reward, epsilon])
-
             # Log end of epoch
             self.logger.info(
-                "epoch=%d, state=%s, step=%d(%d), max_reward=%d, epsilon=%.5f, reward=%d, max_Q=%.6f" %
-                (epoch, state_desc, step, global_step, max_reward, epsilon, stage_reward, np.max(best_act)))
+                "epoch=%d, state=%s, step=%d(%d), epsilon=%.5f, reward=%d, max_Q=%.6f" %
+                (epoch, state_desc, step, global_step, epsilon, np.max(best_act)))
 
             # Increase epoch counter
             epoch += 1
@@ -410,7 +396,6 @@ class ALEtestbench(object):
     def play_game(self, args):
 
         # Init vars
-        max_reward = 0
         epoch = 0
         epsilon = args.play_epsilon #default 1
 
@@ -425,10 +410,13 @@ class ALEtestbench(object):
         # Epochs loop
         while True:
 
+            #reinitialize sarsa agent, to force forgetting the learned net from the previous episode
+            self.sarsa_agent = self.sarsa_init(args)
+            
             self.logger.info("Episode start...")
 
             # Initiallize variables
-            #step = 0
+            stage_step = 0
             game_dif_score = 0
             playerA_score = 0
             playerB_score = 0
@@ -446,10 +434,6 @@ class ALEtestbench(object):
                 state = self.process_snapshot(state)
                 state_seq[:, :, i] = state
 
-            # Init
-            stage_step = 0
-            stage_reward = 0
-
             # Player B initiallization flag
             playerB_is_uninitiallized = True
 
@@ -457,11 +441,19 @@ class ALEtestbench(object):
             while True:
 
                 # Get action player A
+                self.logger.info("Selecting player A action")
                 best_act = self.net.predict([state_seq])[0]
-                if len(np.unique(best_act)) == 1: # shouldn't use epsilon here epsilon only for training
-                    action = random.randint(0, self.actions - 1)
+                
+                # Prevent player A to take actions on the first two frames to add fairness
+                if step < 2:
+                    actionA = 0
                 else:
-                    action = np.argmax(best_act)
+                    if len(np.unique(best_act)) == 1:
+                        actionA = random.randint(0, self.actions - 1)
+                        self.logger.info("Random action selected for player A actionA=%d" % (actionA))
+                    else:
+                        actionA = np.argmax(best_act)
+                        self.logger.info("Action selected for player A actionA=%d" % (actionA))
 
                 # Get action player B
                 self.logger.info("Selecting player B action")
@@ -476,25 +468,27 @@ class ALEtestbench(object):
                         actionB += 18 #TODO again fix this, it is anoying!!
                 else:
                     actionB = 18 #TODO fix this we must use just one value
-                #actionB = 19 #
+
                 self.logger.info("Action selected for player B actionB=%d" % (actionB))
 
-                # Carry out selected action
-                reward_n = self.game.ale.actAB(action, actionB)
+                # Carry out selected actions
+                self.logger.info("Executing actions")
+                reward_n = self.game.ale.actAB(actionA, actionB)
 
                 #Save_scores
                 game_dif_score += reward_n
                 if (reward_n > 0):
                     playerA_score += reward_n
                 elif (reward_n < 0):
-                    playerB_score += reward_n #TODO shouldn't it be -reward_n to get a positive value?
+                    playerB_score += -reward_n
 
                 # Getting screen image
                 state_n = self.game.ale.getScreenRGB()
                 state_n_grayscale = self.process_snapshot(state_n)
 
                 # Get observation for player A
-                state_n = np.reshape(state_n_grayscale, (args.screen_width, args.screen_height, 1))
+                #state_n = np.reshape(state_n_grayscale, (args.screen_width, args.screen_height, 1))
+				state_n = np.reshape(state_n_grayscale, (80, 80, 1))
                 state_seq_n = np.append(state_n, state_seq[:, :, : (self.frame_seq_num - 1)], axis=2)
                 self.logger.info("Player A observation over")
 
@@ -517,35 +511,28 @@ class ALEtestbench(object):
                 # Update state sequence
                 state_seq = state_seq_n
 
-                # Record episode max reward #This makes no sense since max reward is 2
-                #if reward_n > stage_reward:
-                #    stage_reward = reward_n
-
                 # Increase step counter
                 stage_step += 1
 
                 # Record step information
                 self.logger.exp([epoch, stage_step, action, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon])
 
-                # End he episode
+                # End the episode
                 if terminal_n:
+                    self.sarsa_agent.end_episode(-reward_n)
                     self.logger.info("Episode %d is over" % epoch)
                     time.sleep(2)
                     break
                 #****************** END episode loop ****************************************
 
-            # Record global max reward
-            if stage_reward > max_reward:
-                max_reward = stage_reward
-
-            self.logger.info("game over, epoch=%d, step=%d, reward=%d, max_reward=%d" %
-                             (epoch, stage_step, stage_reward, max_reward))
+            self.logger.info("game over, epoch=%d, steps=%d, score_player_A=%d, score_player_B=%d, difference=%d" %
+                             (epoch, stage_step, playerA_score, playerB_score, game_dif_score))
 
             #Increase the epochs counter
             epoch += 1
 
             # Break the loop after max_game_iterations
             if epoch >= max_game_iterations:
-                self.sarsa_agent.finish_epoch(epoch)
+                #self.sarsa_agent.finish_epoch(epoch) we are in playing mode so no need for saving the network
                 break
             #****************** END epoch loop ****************************************

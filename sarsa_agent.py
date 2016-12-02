@@ -29,6 +29,7 @@ class SARSALambdaAgent(object):
         self.image_width = self.network.input_width
         self.data_set = ale_data_set.DataSet(self.image_height, self.image_width, self.phi_length, rng)
         self._game_name = args.game
+        self.logger = logger
 
         # Create folder to save the network
         self.model_dir = "./%s/%s_sarsa" % (args.saved_model_dir, args.game)
@@ -113,8 +114,10 @@ class SARSALambdaAgent(object):
         if self.step_counter >= self.phi_length:
             phi = self.data_set.phi(cur_img)
             action = self.network.choose_action(phi, epsilon)
+            self.logger.info("Initial action selected for player B actionB=%d" % (action))
         else:
             action = self.rng.randint(0, self.num_actions)
+            self.logger.info("Initial random action selected for player B actionB=%d" % (action))
         return action
 
     def _do_training(self):
