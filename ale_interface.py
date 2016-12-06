@@ -6,9 +6,6 @@ import os
 import sys
 from ale_python_interface import ALEInterface
 
-#import pygame
-#pygame.init()
-
 #lcastrol: this interface seems very stupid to me, I believe we must get rid of it
 
 class AleInterface(object):

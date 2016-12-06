@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #  -*- coding: utf-8 -*-
 # author:  <yao62995@gmail.com>
-# modifications by: Luis Castro and Jens Rowekamp
+# modifications by: Luis Castro and Jens Röwekamp
 
 import os
 import sys
@@ -18,7 +18,7 @@ class Logger(object):
         self.DATE_FORMAT = "%Y-%m-%d"
         self.DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
         self._log_date = self._curdate()
-        self._logfile = "%s/%s_%s.log" % (self.log_dir, self._game_name, self._log_date)
+        self._logfile = "%s/%s_%s.log" % (self.log_dir, self._game_name, int(time.time()))
         self._expdatafile = "%s/%s_%s.csv" % (self.log_dir, self._game_name, int(time.time()))
         self._logger = open(self._logfile, 'a+')
         self._expdata = open(self._expdatafile, 'a+')
@@ -50,10 +50,11 @@ class Logger(object):
             self._writer(msg)
 
     def info(self, msg):
-        msg = "%s [INFO] %s" % (self._curdatetime(), msg)
-        if (self._verbosity > 0):
-            print msg
-        self._writer(msg)
+        if self._verbosity < 30:
+            msg = "%s [INFO] %s" % (self._curdatetime(), msg)
+            if (self._verbosity > 0):
+                print msg
+            self._writer(msg)
 
     def warn(self, msg):
         msg = "%s [WARN] %s" % (self._curdatetime(), msg)
@@ -68,6 +69,17 @@ class Logger(object):
             sys.exit(-1)
 
     def exp(self, data_line):
+        if self._verbosity < 30:
+            msg = ""
+            if len(data_line) > 1:
+                for sample in range(0,(len(data_line) - 1)):
+                    msg += "%s," % (str(data_line[sample]))
+                msg += "%s" % (str(data_line[-1]))
+            elif len(data_line) == 1:
+                msg = "%s" % (str(data_line[0]))
+            self._expdata.write("%s\n" % msg)
+
+    def exp2(self, data_line):
         msg = ""
         if len(data_line) > 1:
             for sample in range(0,(len(data_line) - 1)):

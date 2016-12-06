@@ -1,6 +1,6 @@
 #  -*- coding: utf-8 -*-
 # based on the code of:  <yao62995@gmail.com>
-# modifications by: Luis Castro and Jens Rowekamp
+# modifications by: Luis Castro and Jens Röwekamp
 
 import os
 import random
@@ -52,9 +52,12 @@ class ALEtestbench(object):
         self.init_epsilon = args.init_epsilon
         self.final_epsilon = args.final_epsilon
         self.save_model_freq = args.save_model_freq
+
         self.update_frequency = args.update_frequency
         self.action_repeat = args.action_repeat
+
         self.frame_seq_num = args.frame_seq_num
+
         self.save_model_at_termination = args.save_model_at_termination
 
         # Screen buffer for player B
@@ -193,11 +196,13 @@ class ALEtestbench(object):
         self.logger.info("Epsilon decay rate: 1/%.6f epsilon per episode" % (args.explore))
         self.logger.info("Final Epsilon: %.6f" % (args.final_epsilon))
         self.logger.info("Training starting...")
+        self.logger.exp2(["#epoch, step, actionA, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon"],)
 
         #self.logger.info("Player B (SARSA agent), settings:")
 
         # Initiallize variables
         epoch = 0
+        step = 0
         epsilon, global_step = self.param_unserierlize()
         max_game_iterations = self.iterations
 
@@ -208,7 +213,6 @@ class ALEtestbench(object):
             game_dif_score = 0
             playerA_score = 0
             playerB_score = 0
-            step = 0
 
             # initial state
             self.game.ale.reset_game()
@@ -217,7 +221,7 @@ class ALEtestbench(object):
             self.game.ale.setMode(1)
 
             # Initial state sequences
-            state_seq = np.empty((args.screen_width, args.screen_height, self.frame_seq_num))
+            state_seq = np.empty((80, 80, self.frame_seq_num))
             for i in range(self.frame_seq_num):
                 state = self.game.ale.getScreenRGB()
                 state = self.process_snapshot(state)
@@ -300,7 +304,7 @@ class ALEtestbench(object):
                 #TODO add frame limit
 
                 # Scale down epsilon
-                if (step > self.observe) and (epsilon > self.final_epsilon):
+                if step > self.observe and epsilon > self.final_epsilon:
                     epsilon -= (self.init_epsilon - self.final_epsilon) / self.explore
 
                 # Store experience
@@ -311,7 +315,7 @@ class ALEtestbench(object):
                     self.deque.popleft()
 
                 # DQN Minibatch train
-                if ((step > self.observe) and ((step % self.update_frequency) == 0)):
+                if step > self.observe and step % self.update_frequency == 0:
                     self.logger.info("Player A training")
                     for _ in xrange(self.action_repeat):
                         mini_batch = random.sample(self.deque, self.batch_size)
@@ -340,13 +344,6 @@ class ALEtestbench(object):
                 # Increase step counter
                 step += 1
 
-                # Save network model if using the save_model_freq param
-                if ((step % self.save_model_freq) == 0) and (self.save_model_at_termination == False):
-                    global_step += step
-                    self.param_serierlize(epsilon, global_step)
-                    self.net.save_model("%s-dqn" % self.game_name, global_step=global_step)
-                    self.logger.info("Saving network model, global_step=%d, cur_step=%d" % (global_step, step))
-
                 # Player A state description
                 if step < self.observe:
                     state_desc = "observe"
@@ -355,40 +352,48 @@ class ALEtestbench(object):
                 else:
                     state_desc = "train"
 
-                # Record step information
-                self.logger.exp([epoch, step, actionA, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon])
-
                 # End the episode
                 if terminal_n:
                     self.logger.info("Episode %d is over" % epoch)
-
+                    self.logger.exp2([epoch, step, actionA, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon])
                     self.sarsa_agent.end_episode(-reward_n)
 
-                    # Save DQN network model
                     global_step += step
-                    self.param_serierlize(epsilon, global_step)
-                    self.net.save_model("%s-dqn" % self.game_name, global_step=global_step)
-                    self.logger.info("Saving network model, global_step=%d, cur_step=%d" % (global_step, step))
 
-                    #Save sarsa model
-                    net_file = open(args.saved_model_dir + '/' + self.game_name + '_' + str(epoch) + '.pkl', 'w')
-                    cPickle.dump(self.sarsa_agent.network, net_file, -1)
-                    net_file.close()
+                    if epoch % self.save_model_freq == 0:
+                        # Save DQN network model
+                        self.param_serierlize(epsilon, global_step)
+                        self.net.save_model("%s-dqn" % self.game_name, global_step=global_step)
+                        self.logger.info("Saving network model, global_step=%d, cur_step=%d" % (global_step, step))
+
+                        #Save sarsa model
+                        net_file = open(args.saved_model_dir + '/' + self.game_name + '_' + str(epoch) + '.pkl', 'w')
+                        cPickle.dump(self.sarsa_agent.network, net_file, -1)
+                        net_file.close()
 
                     break
+
+                # Record step information
+                self.logger.exp([epoch, step, actionA, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon])
+
                 #****************** END episode loop ****************************************
 
             # Log end of epoch
             self.logger.info(
-                "epoch=%d, state=%s, step=%d(%d), epsilon=%.5f, reward=%d, max_Q=%.6f" %
-                (epoch, state_desc, step, global_step, epsilon, np.max(best_act)))
+                "epoch=%d, state=%s, step=%d (%d), epsilon=%.5f, playerA=%d, playerB=%d" %
+                (epoch, state_desc, step, global_step, epsilon, playerA_score, playerB_score))
 
             # Increase epoch counter
             epoch += 1
 
             # Break the loop after max_game_iterations
             if epoch >= max_game_iterations:
-                self.sarsa_agent.finish_epoch(epoch)
+                if self.save_model_at_termination == True:
+                    self.sarsa_agent.finish_epoch(epoch)
+                    # Save DQN network model
+                    self.param_serierlize(epsilon, global_step)
+                    self.net.save_model("%s-dqn" % self.game_name, global_step=global_step)
+                    self.logger.info("Saving network model, global_step=%d, cur_step=%d" % (global_step, step))
                 break
             #****************** END epoch loop ****************************************
 
@@ -406,6 +411,8 @@ class ALEtestbench(object):
             epsilon, _ = self.param_unserierlize()
         else:
             self.logger.info("Using epsilong: %d" % epsilon)
+
+        self.logger.exp2(["#epoch, step, actionA, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon",])
 
         # Epochs loop
         while True:
@@ -428,7 +435,7 @@ class ALEtestbench(object):
             self.game.ale.setMode(1)
 
             # Init state sequence
-            state_seq = np.empty((args.screen_width, args.screen_height, self.frame_seq_num))
+            state_seq = np.empty((80, 80, self.frame_seq_num))
             for i in range(self.frame_seq_num):
                 state = self.game.get_screen_rgb()
                 state = self.process_snapshot(state)
@@ -444,7 +451,6 @@ class ALEtestbench(object):
                 self.logger.info("Selecting player A action")
                 best_act = self.net.predict([state_seq])[0]
                 
-                # Prevent player A to take actions on the first two frames to add fairness
                 if len(np.unique(best_act)) == 1:
                     actionA = random.randint(0, self.actions - 1)
                     self.logger.info("Random action selected for player A actionA=%d" % (actionA))
@@ -511,15 +517,17 @@ class ALEtestbench(object):
                 # Increase step counter
                 stage_step += 1
 
-                # Record step information
-                self.logger.exp([epoch, stage_step, actionA, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon])
-
                 # End the episode
                 if terminal_n:
                     self.sarsa_agent.end_episode(-reward_n)
                     self.logger.info("Episode %d is over" % epoch)
+                    self.logger.exp2([epoch, stage_step, actionA, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon])
                     time.sleep(2)
                     break
+                
+                # Record step information
+                self.logger.exp([epoch, stage_step, actionA, actionB, reward_n, game_dif_score, playerA_score, playerB_score, epsilon])
+
                 #****************** END episode loop ****************************************
 
             self.logger.info("game over, epoch=%d, steps=%d, score_player_A=%d, score_player_B=%d, difference=%d" %

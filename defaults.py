@@ -10,26 +10,27 @@ class defaults:
     # Experiment Parameters
     # ----------------------
     STEPS_PER_EPOCH = 250000
-    EPOCHS = 60
+    EPOCHS = 1201
     STEPS_PER_TEST = 125000
 
     # ----------------------
     # ALE Parameters
     # ----------------------
-    ALE_FRAME_SKIP = 1
+    ALE_FRAME_SKIP = 4
     REPEAT_ACTION_PROBABILITY = 0
 
     # -------------------------------
     # DQN agent parameters:
     # -------------------------------
-    SAVE_MODEL_FREQ = 100000
+    SAVE_MODEL_FREQ = 100
     #DQN_OBSERVE_LIMIT = 10000 #Original value
-    DQN_OBSERVE_LIMIT = 30
-    #DQN_EXPLORE_LIMIT = 2000000.0
-    DQN_EXPLORE_LIMIT = 675000.0  #This is a decay of 15 games for boxing (15 * 1800) each game of 1800 frames
+    DQN_OBSERVE_LIMIT = 1786*2 #Around 2 games
+    DQN_EXPLORE_LIMIT = 2000000.0  #Default would be around 1120 games
+    #DQN_EXPLORE_LIMIT = 678680.0  #This is a decay of 380 games for boxing (380 * 1786) each game of 1786 frames
     UPDATE_FREQUENCY = 4
     DQN_INITIAL_EPSILON = 1.0
-    DQN_FINAL_EPSILON = 0.15
+    DQN_FINAL_EPSILON = 0.10
+    REPLAY_MEMORY = 50000
 
     # -------------------------------
     # SARSA Agent/Network parameters:
@@ -69,4 +70,5 @@ class defaults:
     # -------------------------------
     # Logger
     # -------------------------------
-    VERBOSITY = 0
+    #VERBOSITY = 0
+    VERBOSITY = 30 # Only warnings for productive environment to keep the log files small

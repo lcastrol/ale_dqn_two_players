@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 #  -*- coding: utf-8 -*-
 # author:  <yao62995@gmail.com>
-# modifications by Luis Castro and Jens Rowekamp
+# modifications by Luis Castro and Jens Röwekamp
 
 from defaults import defaults
 
@@ -46,7 +46,7 @@ def parser_argument():
     parse.add_argument("--init_epsilon", type=float, default=defaults.DQN_INITIAL_EPSILON, help="Initial value for DQN epsilon")
     parse.add_argument("--final_epsilon", type=float, default=defaults.DQN_FINAL_EPSILON, help="Final value of DQN epsilon")
 
-    parse.add_argument("--replay_memory", type=int, default=defaults.REPLAY_MEMORY_SIZE, help="Size of the replay memory")
+    parse.add_argument("--replay_memory", type=int, default=defaults.REPLAY_MEMORY, help="Size of the replay memory")
     parse.add_argument("--gamma", type=float, default=0.99, help="")
     parse.add_argument("--update_frequency", type=int, default=defaults.UPDATE_FREQUENCY, help=" Frequency of the minibatch train for DQN in steps")
     parse.add_argument("--action_repeat", type=int, default=4, help="")
