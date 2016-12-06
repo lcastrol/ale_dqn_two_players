@@ -53,7 +53,7 @@ class defaults:
     EPSILON_DECAY = 1000000
     PHI_LENGTH = 4
     REPLAY_MEMORY_SIZE = 1000000
-    #REPLAY_MEMORY_SIZE = 10000
+    #REPLAY_MEMORY_SIZE =  50000
     BATCH_SIZE = 32
     #NETWORK_TYPE = "nature_cuda" #Original value, no gpu support for us:P
     #NETWORK_TYPE = "linear"
