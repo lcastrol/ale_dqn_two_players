@@ -38,7 +38,7 @@ fig = plt.figure(1, figsize=(9, 6))
 ax1 = fig.add_subplot(111)
 
 # Create the boxplot
-bp = ax1.boxplot(data, notch=0, sym='+', vert=1, whis=1.5)
+bp = ax1.boxplot(data, notch=0, sym='+', vert=1, whis=1.5, showmeans=True, meanline=True)
 plt.setp(bp['boxes'], color='black')
 plt.setp(bp['whiskers'], color='black')
 plt.setp(bp['fliers'], color='red', marker='+')
